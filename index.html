@@ -62,6 +62,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 <canvas id="cv"></canvas>
 <button id="bBack" class="ghost" hidden style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));font-size:13px;padding:6px 12px;margin:0;background:var(--card)">← メニュー</button>
 <button id="bSnd" class="ghost" aria-label="音のオン・オフ" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">🔊</button>
+<button id="bPause" class="ghost" hidden aria-label="一時休止" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(62px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">⏸</button>
 <div class="panel" id="title">
   <div class="box">
     <h1>あんずもう <span style="font-size:15px">夜の土俵</span></h1>
@@ -240,9 +241,9 @@ const STG={
   uchu:{name:'宇宙',icon:'🌌',fric:0.993,speed:0.6,desc:'重さがなく、ふわふわゆっくり。いちど動くと なかなか止まらない'},
 };
 // コンピューターの強さ（2026-11-08）：反応のおそさ・ねらいの甘さ・必殺技を使う早さ・連打の速さ
-const LVS={yowai:{name:'よわい',icon:'🌱',desc:'ゆっくり考える。ねらいが甘い。はじめての人に',wait:26,rnd:40,tol:[0.45,0.45],sp:0.04,mash:0.7},
-  futsuu:{name:'ふつう',icon:'🍙',desc:'ちょうどいい あいて',wait:0,rnd:30,tol:[0.2,0.3],sp:1,mash:1},
-  tsuyoi:{name:'つよい',icon:'🔥',desc:'すばやく、よくねらう。連打も速い',wait:-4,rnd:14,tol:[0.12,0.12],sp:1,mash:1.2}};
+const LVS={yowai:{name:'よわい',icon:'🌱',desc:'ゆっくり考える。ねらいが甘い。はじめての人に',wait:26,rnd:40,tol:[0.45,0.45],sp:0.04,mash:0.7,safe:0.7},
+  futsuu:{name:'ふつう',icon:'🍙',desc:'ちょうどいい あいて',wait:0,rnd:30,tol:[0.2,0.3],sp:1,mash:1,safe:0.97},
+  tsuyoi:{name:'つよい',icon:'🔥',desc:'すばやく、よくねらう。連打も速い',wait:-4,rnd:14,tol:[0.12,0.12],sp:1,mash:1.2,safe:0.97}};
 let LV='futsuu',SIMLV=null;try{const v=localStorage.getItem('anzumou_lv');if(LVS[v])LV=v;}catch(e){}
 function lvOf(i){if(i!==1)return LVS.futsuu;if(SIM)return LVS[SIMLV||'futsuu'];return cpu&&!WATCH?LVS[MLV||LV]:LVS.futsuu;}
 // ===== ものがたり（2026-11-08 だいさん「全部やって」）：インスタのリールと同じ むかしばなし。リールが出た日に その話の土俵がひらく =====
@@ -382,7 +383,8 @@ const SND=(()=>{let ac=null,master,sfxG,bgmG,nb,on=true,next=0,stp=0,phrase=null
   function toggle(){on=!on;try{localStorage.setItem('anzumou_snd',on?'on':'off');}catch(e){}unlock();if(master)master.gain.value=on?1:0;
     if(ac){if(on)ac.resume();else ac.suspend();}return on;}
   document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend();else if(on)ac.resume();});
-  return{unlock,play,toggle,buzz,get on(){return on;}};
+  function hold(v){if(!ac)return;if(v)ac.suspend();else if(on)ac.resume();}   // 一時休止の間は 音も止める
+  return{unlock,play,toggle,buzz,hold,get on(){return on;}};
 })();
 for(const ev of['pointerdown','keydown'])addEventListener(ev,()=>SND.unlock(),{capture:true});
 document.addEventListener('click',e=>{if(e.target.closest('button'))SND.play('click');});
@@ -506,11 +508,12 @@ function down(i){if(state!=='play'||!P||UT)return;if(CL){if(i===CL.d||(i===CL.a&
 function up(i){if(!P)return;const p=P[i];if((p.held>=0&&p.held<HOLD)||p.held===-3)tap(i);p.held=-1;}
 const KEY0=['a','s','f',' '];   // 2人で1台はやめた（2026-11-08 だいさん「ネット対戦かコンピューター対戦になる」）
 addEventListener('keydown',e=>{if(e.repeat)return;const k=e.key.toLowerCase();
+  if((k==='p'||k==='escape')&&!bPause.hidden){e.preventDefault();setPause(!PAUSE);return;}if(PAUSE)return;
   if(KEY0.includes(k)){e.preventDefault();if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'d'});else down(0);}});
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();
   if(KEY0.includes(k)){if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'u'});else up(0);}});
 const ptr={};
-cv.addEventListener('pointerdown',e=>{e.preventDefault();
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(PAUSE){setPause(false);return;}
   if(NET&&NET.role==='guest'&&MODE==='net'){if(INTRO>30){netSend({t:'sk'});return;}if(!CL&&state==='play'&&inSpBtn(e)){if(spReady()){netSend({t:'sp'});SND.buzz(80);}return;}ptr[e.pointerId]=1;netSend({t:'d'});return;}
   if(INTRO>30){INTRO=30;return;}if(WATCH)return;
   if(!CL&&!UT&&state==='play'&&inSpBtn(e)){if(spReady()){special(0);SND.buzz(80);}return;}   // 必殺技ボタン（連打合戦の間は どこでも連打）
@@ -523,6 +526,11 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 function angDiff(a,b){let d=(a-b)%(Math.PI*2);if(d<0)d+=Math.PI*2;return d>Math.PI?Math.PI*2-d:d;}
 // コンピューターの必殺技は すぐ出さず、頭の上に「！」を出してから（2026-11-09 Fable のレビューで）
 function spGo(i){const me=P[i];if(me.spWarn>0||me.spLock>0||me.spUsed||state!=='play')return;if(SP_WARN<=0){special(i);return;}me.spWarn=SP_WARN;}
+// この向きで突進したら、あいてに当たらずに 土俵の外まで すべって行くか（止まるところを ざっと先読み）
+function selfOut(p,op){const f=STG[stage].fric,dv=R0*p.c.pow/Math.sqrt(p.c.mass)*(STG[stage].speed||1),
+  vx=p.vx+Math.cos(p.ang)*dv,vy=p.vy+Math.sin(p.ang)*dv,L=Math.hypot(vx,vy)*f/(1-f),ex=p.x+vx/Math.hypot(vx,vy)*L,ey=p.y+vy/Math.hypot(vx,vy)*L;
+  if(Math.hypot(ex-cx,ey-cy)<ringR*0.92)return false;
+  const dOp=Math.hypot(op.x-p.x,op.y-p.y);const slip=f>0.97;return !(angDiff(Math.atan2(vy,vx),Math.atan2(op.y-p.y,op.x-p.x))<(slip?0.12:0.22)&&dOp<(slip?R0*0.7:L+op.r));}   // つるつるの土俵（雪・海・宇宙）は 外れると止まらないので、ほぼ真っすぐ近いときだけ   // あいてに当たる向きなら 行く
 function cpuThink(i,dt){
   const me=P[i],op=P[1-i];if(me.out||me.spWarn>0)return;if(TUT===1&&!SIM)return;   // お手本の①の間は、あいては待つ
   const toOp=Math.atan2(op.y-me.y,op.x-me.x),toCenter=Math.atan2(cy-me.y,cx-me.x);
@@ -539,7 +547,9 @@ function cpuThink(i,dt){
     else if(me.c!==CH.anzu&&diff(toOp)<0.25&&dOp<R0*0.9&&dC<ringR*0.8&&spOk()){spGo(i);return;}
   }
   if(me.cd>0||me.fun>0)return;
-  if(diff(want)<L.tol[0]+Math.random()*L.tol[1]&&me.cpuWait<=0){tap(i);me.cpuWait=Math.max(0,me.c.cd+4+L.wait+Math.random()*L.rnd);}   // 反応の速さにばらつき（人らしく）
+  if(diff(want)<L.tol[0]+Math.random()*L.tol[1]&&me.cpuWait<=0){
+    if(selfOut(me,op)&&Math.random()<L.safe){me.cpuWait=6;return;}   // 押したら自分が外へ飛ぶ向きなら待つ（2026-11-09 だいさん「敵の自爆が結構多い」）
+    tap(i);me.cpuWait=Math.max(0,me.c.cd+4+L.wait+Math.random()*L.rnd);}   // 反応の速さにばらつき（人らしく）
 }
 
 // ===== 毎フレーム =====
@@ -557,7 +567,7 @@ function step(dt){
     for(const p of P){
       if(p.held>=0){p.held+=dt;if(p.held>=HOLD){if(p.spUsed||p.spLock>0)p.held=-3;else{p.held=-2;special(p.i);}}}   // -3＝必殺技はもう使った→離したら突進   // -2＝この押しはもう使った
       if(p.spWarn>0){p.spWarn-=dt;if(p.spWarn<=0){p.spWarn=0;special(p.i);}}   // 「！」のあとで必殺技
-      if(p.spLock>0)p.spLock-=dt;p.ang+=p.spin*dt;p.cd=Math.max(0,p.cd-dt);p.sq*=Math.pow(0.86,dt);
+      if(p.spLock>0)p.spLock-=dt;if(!(p.spWarn>0))p.ang+=p.spin*dt;p.cd=Math.max(0,p.cd-dt);p.sq*=Math.pow(0.86,dt);
       if(p.twice>0){p.twice-=dt;if(p.twice<=0){const a=p.ang;p.ang=p.twiceAng;dash(p,p.c.spMul||1.05);p.ang=a;}}
       if(p.fun>0){p.fun-=dt;p.vx*=Math.pow(0.6,dt);p.vy*=Math.pow(0.6,dt);}
       if(p.kana>0)p.kana-=dt;
@@ -810,8 +820,9 @@ function drawPoyo(p,t){
     ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=9;ctx.strokeStyle='#fff';ctx.stroke();ctx.lineWidth=5;ctx.strokeStyle=p.team;ctx.stroke();ctx.globalAlpha=1;}
   ctx.restore();
 }
-function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest'))step(dt);
+function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest')&&!PAUSE)step(dt);
   if(NET&&NET.role==='host'&&MODE==='net'&&P&&state!=='menu'&&state!=='over'&&(netK++%2===0))netSend(netSnap());draw(t);
+  bPause.hidden=!(P&&state!=='menu'&&state!=='over'&&MODE!=='net'&&!SIM);if(PAUSE)drawPause();
   if(!document.getElementById('title').hidden)drawVs(t);if(!document.getElementById('pickP').hidden)drawPv(t);requestAnimationFrame(loop);}
 
 // ===== えらぶ画面 =====
@@ -890,14 +901,21 @@ $('aSave').addEventListener('click',async e=>{if(!DL)return;e.preventDefault();c
   try{await DL.save({filename:'anzumou_'+PK[0]+'_'+PK[1]+'.jpg',data:new Blob([a])});}catch(err){if(err&&err.code!=='declined'&&err.code!=='rate_limited')$('aSave').hidden=true;}});
 document.getElementById('bHowClose').onclick=()=>{document.getElementById('howto').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bpr').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,false,true);};
-document.getElementById('bBack').onclick=()=>{netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
+document.getElementById('bBack').onclick=()=>{setPause(false);netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
 document.getElementById('bw').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,true);};
 document.getElementById('bRe').onclick=()=>{if(MODE==='net'&&NET){if(NET.role==='host')netStart();else{netSend({t:'re'});document.getElementById('scoreTxt').textContent='あいてを 待っています…';}return;}AGAIN=true;newMatch(cpu,WATCH);};
 $('bShare').onclick=shareGo;
 document.getElementById('bNet').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('netP').hidden=false;netMsg(NET&&NET.conn&&NET.conn.open?'つながっています':'');};
 document.getElementById('bNetClose').onclick=()=>{netClose();document.getElementById('netP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bHost').onclick=netHost;document.getElementById('bJoin').onclick=netJoin;
-document.getElementById('bMenu').onclick=()=>{netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();};
+document.getElementById('bMenu').onclick=()=>{setPause(false);netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();};
+// ===== 一時休止（2026-11-09 だいさん「コンピューター対戦時、一時休止が欲しい」）：右上の ⏸・P か Esc・画面を離れたら自動で。ネットたいせんでは出さない =====
+let PAUSE=false;const bPause=document.getElementById('bPause');
+function setPause(v){if(PAUSE===v)return;PAUSE=v;bPause.textContent=v?'▶':'⏸';SND.hold(v);for(const p of P||[])p.held=-1;}
+bPause.onclick=e=>{e.stopPropagation();setPause(!PAUSE);};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&!bPause.hidden&&state==='play')setPause(true);});
+function drawPause(){ctx.save();ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,14,10,.92)';const bw=Math.min(W-40,R0*1.5),bh=R0*0.55;ctx.beginPath();ctx.roundRect(cx-bw/2,cy-bh/2,bw,bh,18);ctx.fill();ctx.textAlign='center';ctx.fillStyle='#fff6e6';
+  ctx.font=`900 ${Math.max(30,R0*0.18)}px sans-serif`;ctx.fillText('⏸ ひとやすみ',cx,cy-bh*0.05);ctx.font=`${Math.max(15,R0*0.07)}px sans-serif`;ctx.globalAlpha=.85;ctx.fillText('タップで つづける',cx,cy+bh*0.3);ctx.restore();}
 const bSnd=document.getElementById('bSnd');bSnd.textContent=SND.on?'🔊':'🔇';bSnd.onclick=e=>{e.stopPropagation();bSnd.textContent=SND.toggle()?'🔊':'🔇';SND.buzz([200,80,300]);};
 newRound();state='menu';requestAnimationFrame(loop);
 if(/[?&]watch/.test(location.search)){const q=new URLSearchParams(location.search);if(q.get('s'))stageSel=q.get('s');if(q.get('a'))pick[0]=q.get('a');if(q.get('b'))pick[1]=q.get('b');if(q.get('s'))stage=q.get('s');newMatch(false,true);}
