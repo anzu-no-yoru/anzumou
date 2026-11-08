@@ -201,8 +201,12 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 <script>
 const cv=document.getElementById('cv');let ctx=cv.getContext('2d');
 let W,H,R0,cx,cy,dpr;
-function fit(){dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  R0=Math.min(W,H)*0.42;cx=W/2;cy=H/2+10;}
+function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  R0=Math.min(W,H)*0.42;cx=W/2;cy=H/2+10;
+  // 試合の途中で 画面を回したとき：2人の場所・大きさ・土俵を 新しい大きさに合わせる（前は2人とも土俵の外になり 点が入った・2026-11-09）
+  try{if(P&&oR>0&&R0>0&&(oR!==R0||ox!==cx||oy!==cy)){const k=R0/oR,mv=o=>{o.x=cx+(o.x-ox)*k;o.y=cy+(o.y-oy)*k;};
+    for(const p of P){mv(p);p.vx*=k;p.vy*=k;p.r*=k;p.r0*=k;}ringR*=k;parts.forEach(mv);
+    if(UT){const m={x:UT.mx,y:UT.my};mv(m);UT.mx=m.x;UT.my=m.y;UT.rad*=k;}}}catch(e){}}
 addEventListener('resize',fit);fit();
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
@@ -286,14 +290,15 @@ const WIN=3,ROUND_T=30,HOLD=24;   // 長押し＝0.4秒（60fps で24コマ）
 let P,ringR,state='menu',cpu=false,score=[0,0],roundT=0,shake=0,parts=[],banner=null,last=performance.now(),freeze=0,flakes=[];
 let INTRO=0,lastUt=-1,KORA=[1,1],UT=null,utRound=-1,UT_V=0.012,UT_A0=1.0,UT_A1=0.6,UT_CD=60,TUT=0,tutT=0,CL=null,SIM=false,WATCH=false,PRACTICE=false,pushes=0,pushed=0,waves=[];   // WATCH＝コンピューター同士の対戦を見る   // コンピューター同士の試し（描かない）
 
-function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i===1)?{...CH[EP.base],shape:EP.shape,name:EP.name,icon:EP.icon,col:EP.col,prop:EP.prop}:CH[pick[i]],a=i?0:Math.PI;
+let PK=['anzu','oni'];   // この試合のキャラ
+function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i===1)?{...CH[EP.base],shape:EP.shape,name:EP.name,icon:EP.icon,col:EP.col,prop:EP.prop}:CH[PK[i]],a=i?0:Math.PI;
   return{i,c,k:(MODE==='story'&&EP&&i===1)?EP.shape:undefined,x:cx+Math.cos(a)*R0*0.45,y:cy,vx:0,vy:0,r:Math.max(24,R0*0.13)*c.r,ang:Math.random()*Math.PI*2,spLock:120,spin:(i?-1:1)*c.spin,
     cd:0,sq:0,out:false,face:0,team:i?css('--p2')||'#4d9de0':css('--p1')||'#ff6b6b',
     held:-1,stam:1,r0:Math.max(24,R0*0.13)*c.r,big:0,curve:0,clCool:0,spUsed:false,fun:0,twice:0,kana:0,cpuWait:Math.random()*40,cpuHold:0};}
 function newRound(){waves=[];CL=null;UT=null;utRound=-1;if(stageSel==='omakase'&&!SIM){const ks=Object.keys(STG).filter(k=>k!==stage);stage=ks[Math.floor(Math.random()*ks.length)];}else if(stageSel!=='omakase')stage=stageSel;if(FSTG)stage=FSTG;
   P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');banner={t:STG[stage].icon+' '+STG[stage].name+'　はっけよい…',life:60};freeze=SIM?1:60;parts=[];}
-function newMatch(c,w=false,pr=false){if(MODE==='net'){}else if(MODE!=='free'){if(MODE==='story'){pick[0]='anzu';pick[1]=EP.base;}else{const d=dailyCfg();pick[1]=d.opp;}}
-  else if(oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
+function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
+  PK=[...pick];if(MODE==='story'){PK[0]='anzu';PK[1]=EP.base;}else if(MODE==='daily'){PK[1]=dailyCfg().opp;}   // えらんだキャラ（pick）は そのまま残す
   INTRO=SIM?0:150;cpu=c;WATCH=w;PRACTICE=pr;KORA=[1,1];utRound=-1;TUT=(!w&&!tutSeen()&&MODE!=='net')?1:0;tutT=0;pushes=0;pushed=0;document.getElementById('bBack').hidden=false;score=[0,0];document.getElementById('title').hidden=true;document.getElementById('over').hidden=true;newRound();}
 
 // ===== 音（Web Audio でその場で作る・音のファイルは使わない。2026-11-08 だいさん「音楽ないの？効果音とか」） =====
@@ -384,8 +389,9 @@ const netMsg=t=>{const e=document.getElementById('netMsg');if(e)e.textContent=t;
 function netSend(m){try{if(NET&&NET.conn&&NET.conn.open)NET.conn.send(m);}catch(e){}}
 function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';sc.onload=()=>ok();sc.onerror=()=>ng(new Error('load'));document.head.appendChild(sc);});}
 function netClose(){if(NET){try{NET.conn&&NET.conn.close();}catch(e){}try{NET.peer&&NET.peer.destroy();}catch(e){}}NET=null;if(MODE==='net')MODE='free';}
-function netLost(){if(!NET)return;netClose();banner={t:'つながりが 切れました',life:120};if(state!=='menu'){state='over';document.getElementById('over').hidden=true;document.getElementById('bBack').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();}netMsg('つながりが 切れました');}
-function netWire(c){NET.conn=c;c.on('data',onNet);c.on('close',netLost);c.on('error',netLost);}
+function netLost(){if(!NET)return;netClose();INTRO=0;banner={t:'つながりが 切れました',life:120};if(state!=='menu'){state='over';document.getElementById('over').hidden=true;document.getElementById('bBack').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();}netMsg('つながりが 切れました');}
+function netWire(c){NET.conn=c;NET.rx=performance.now();c.on('data',m=>{if(NET)NET.rx=performance.now();onNet(m);});c.on('close',netLost);c.on('error',netLost);}
+setInterval(()=>{if(!NET||!NET.conn||!NET.conn.open)return;netSend({t:'pg'});if(performance.now()-NET.rx>6000)netLost();},1000);   // 相手のタブが閉じた・電波が切れた・スマホが眠った
 async function netHost(){netClose();netMsg('じゅんび中…');try{await loadPeer();}catch(e){netMsg('つなぐ道具を 読めませんでした（ネットを確かめてください）');return;}
   const code=String(1000+Math.floor(Math.random()*9000)),peer=new Peer('anzumou-'+code);NET={role:'host',peer,code};
   peer.on('open',()=>netMsg('合言葉は 「'+code+'」。友だちに つたえて、入ってくるのを 待っています…'));
@@ -401,7 +407,7 @@ function netStart(){MODE='net';EP=null;MLV=null;FSTG=null;newMatch(false);netSen
 function onNet(m){if(!NET)return;
   if(NET.role==='host'){
     if(m.t==='hi'){NETC=[CH[pick[0]],m.c];document.getElementById('netP').hidden=true;netStart();}
-    else if(m.t==='d')down(1);else if(m.t==='u')up(1);else if(m.t==='sp')special(1);
+    else if(m.t==='sk'){if(INTRO>30)INTRO=30;}else if(m.t==='d')down(1);else if(m.t==='u')up(1);else if(m.t==='sp')special(1);
     else if(m.t==='re'&&state==='over')netStart();}
   else{
     if(m.t==='start'){NETC=m.c;MODE='net';document.getElementById('netP').hidden=true;newMatch(false);}
@@ -413,11 +419,12 @@ function netSnap(){const n=v=>Math.round(v*1e4)/1e4;
   return{t:'snap',st:state,sc:score,stg:stage,rr:n(ringR/R0),in:INTRO,sh:shake,lu:lastUt,kora:KORA,
     bn:banner&&{t:banner.t,life:banner.life,col:banner.col},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
     p:P.map(p=>[n((p.x-cx)/R0),n((p.y-cy)/R0),n(p.vx/R0),n(p.vy/R0),n(p.ang),n(p.r/R0),n(p.sq),p.out?1:0,p.cd,p.fun,p.kana,p.big,p.face,p.held,p.spUsed?1:0,p.spLock,n(p.stam),p.hitT||0])};}
-function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn;CL=m.cl;
+const FLIP={'あなた':'あいて','あいて':'あなた','おされた…':'おしだした！','おしだした！':'おされた…'};   // 親から見た言葉を 子から見た言葉に
+function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:String(m.bn.t).replace(/あなた|あいて|おされた…|おしだした！/g,w=>FLIP[w])};CL=m.cl;
   m.p.forEach((a,i)=>{const p=P[i];if(!p)return;[p.x,p.y,p.vx,p.vy,p.ang,p.r,p.sq]=[cx+a[0]*R0,cy+a[1]*R0,a[2]*R0,a[3]*R0,a[4],a[5]*R0,a[6]];
     p.out=!!a[7];p.cd=a[8];p.fun=a[9];p.kana=a[10];p.big=a[11];p.face=a[12];p.held=a[13];p.spUsed=!!a[14];p.spLock=a[15];p.stam=a[16];p.hitT=a[17];});}
 // 親の音は 子にも送る（勝ち負けの曲は それぞれが鳴らす）
-{const play0=SND.play;SND.play=(k,a)=>{play0(k,a);if(NET&&NET.role==='host'&&MODE==='net'&&k!=='fanfare'&&k!=='lose')netSend({t:'s',k,a});};}
+let NOFWD=0;{const play0=SND.play;SND.play=(k,a)=>{play0(k,a);if(NET&&NET.role==='host'&&MODE==='net'&&!NOFWD)netSend({t:'s',k:k==='win'?'lose':k==='lose'?'win':k,a});};}   // 1点の勝ち負けの音は 子から見て逆に。試合の終わりの曲は それぞれ
 // ===== 突進・必殺技 =====
 function dash(p,mul=1){
   const dv=R0*p.c.pow*mul/Math.sqrt(p.c.mass)*(STG[stage].speed||1);p.vx+=Math.cos(p.ang)*dv;p.vy+=Math.sin(p.ang)*dv;p.sq=1;if(p.c.curve)p.curve=30;SND.play('dash');
@@ -458,7 +465,7 @@ function clashStep(dt){CL.t+=dt;CL.v+=(CL.solo?0.011:0.002)*dt;
   for(const p of P){p.sq*=Math.pow(0.8,dt);p.ang+=p.spin*dt;}
   clashPlace();const d=P[CL.d],a=P[CL.a];
   if(CL.v>=1||(CL.t>=CL_T&&CL.v>0.25)){d.vx=CL.ux*R0*0.025;d.vy=CL.uy*R0*0.025;d.hitT=45;d.face=20;CL=null;return;}   // 押し出された
-  if(CL.v<=-1||CL.t>=CL_T){d.hitT=0;d.clCool=90;if(d.i===0&&counting()){REC.kor++;recSave();}shake=Math.max(shake,10);
+  if(CL.v<=-1||CL.t>=CL_T){d.hitT=0;d.clCool=90;if(d.i===0&&counting()&&!CL.solo){REC.kor++;recSave();}shake=Math.max(shake,10);
     if(CL.solo){d.vx=-CL.ux*R0*0.012;d.vy=-CL.uy*R0*0.012;CL=null;SND.play('koraeta');if(!SIM)banner={t:'こらえた！',life:50,col:d.team};return;}
     const mx=(d.x+a.x)/2,my=(d.y+a.y)/2,cw=Math.random()<.5?1:-1;UT={d:d.i,a:a.i,mx,my,a0:Math.atan2(d.y-my,d.x-mx),rad:Math.hypot(d.x-mx,d.y-my),t:0,ux:CL.ux,uy:CL.uy,cw};CL=null;
     SND.play('utchari');if(!SIM)banner={t:'うっちゃり！',life:60,col:d.team};}}
@@ -480,7 +487,7 @@ function drawSpBtn(t){const b=spBtn();if(!b||state==='menu'||state==='over')retu
 function inSpBtn(e){const b=spBtn();if(!b)return false;const rc=cv.getBoundingClientRect(),x=(e.clientX-rc.left)*W/rc.width,y=(e.clientY-rc.top)*H/rc.height;return Math.hypot(x-b.x,y-b.y)<b.r+14;}
 // 押した長さで分ける：押した瞬間ではなく、離したとき（短い）か 0.4秒たったとき（長い）に決める
 function down(i){if(state!=='play'||!P||UT)return;if(CL){if(i===CL.d||(i===CL.a&&!CL.solo))clashTap(i);return;}const p=P[i];if(p.held<0)p.held=0;}
-function up(i){if(!P)return;const p=P[i];if(p.held>=0&&p.held<HOLD)tap(i);p.held=-1;}
+function up(i){if(!P)return;const p=P[i];if((p.held>=0&&p.held<HOLD)||p.held===-3)tap(i);p.held=-1;}
 const KEY0=['a','s','f',' '];   // 2人で1台はやめた（2026-11-08 だいさん「ネット対戦かコンピューター対戦になる」）
 addEventListener('keydown',e=>{if(e.repeat)return;const k=e.key.toLowerCase();
   if(KEY0.includes(k)){e.preventDefault();if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'d'});else down(0);}});
@@ -488,7 +495,7 @@ addEventListener('keyup',e=>{const k=e.key.toLowerCase();
   if(KEY0.includes(k)){if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'u'});else up(0);}});
 const ptr={};
 cv.addEventListener('pointerdown',e=>{e.preventDefault();
-  if(NET&&NET.role==='guest'&&MODE==='net'){if(!CL&&state==='play'&&inSpBtn(e)){if(spReady()){netSend({t:'sp'});SND.buzz(80);}return;}ptr[e.pointerId]=1;netSend({t:'d'});return;}
+  if(NET&&NET.role==='guest'&&MODE==='net'){if(INTRO>30){netSend({t:'sk'});return;}if(!CL&&state==='play'&&inSpBtn(e)){if(spReady()){netSend({t:'sp'});SND.buzz(80);}return;}ptr[e.pointerId]=1;netSend({t:'d'});return;}
   if(INTRO>30){INTRO=30;return;}if(WATCH)return;
   if(!CL&&!UT&&state==='play'&&inSpBtn(e)){if(spReady()){special(0);SND.buzz(80);}return;}   // 必殺技ボタン（連打合戦の間は どこでも連打）
   ptr[e.pointerId]=0;down(0);});
@@ -530,7 +537,7 @@ function step(dt){
     if(PRACTICE){for(const p of P)if(p.spUsed){p.spCool=(p.spCool||150)-dt;if(p.spCool<=0){p.spUsed=false;p.spCool=0;}}}   // 練習：必殺技は2.5秒でまた使える。あいては動かない
     else if((SIM||WATCH)&&Math.random()<.5){cpuThink(0,dt);cpuThink(1,dt);}else{if(cpu||SIM||WATCH)cpuThink(1,dt);if(SIM||WATCH)cpuThink(0,dt);}   // 試しでは考える順をまぜる（先に考えた方が得をしないように）
     for(const p of P){
-      if(p.held>=0){p.held+=dt;if(p.held>=HOLD){p.held=-2;special(p.i);}}   // -2＝この押しはもう使った
+      if(p.held>=0){p.held+=dt;if(p.held>=HOLD){if(p.spUsed||p.spLock>0)p.held=-3;else{p.held=-2;special(p.i);}}}   // -3＝必殺技はもう使った→離したら突進   // -2＝この押しはもう使った
       if(p.spLock>0)p.spLock-=dt;p.ang+=p.spin*dt;p.cd=Math.max(0,p.cd-dt);p.sq*=Math.pow(0.86,dt);
       if(p.twice>0){p.twice-=dt;if(p.twice<=0){const a=p.ang;p.ang=p.twiceAng;dash(p,p.c.spMul||1.05);p.ang=a;}}
       if(p.fun>0){p.fun-=dt;p.vx*=Math.pow(0.6,dt);p.vy*=Math.pow(0.6,dt);}
@@ -577,13 +584,13 @@ function step(dt){
   for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vx*=0.94;q.vy*=0.94;q.life-=dt;}
   parts=parts.filter(q=>q.life>0);for(const w of waves)w.life-=dt;waves=waves.filter(w=>w.life>0);shake*=Math.pow(0.86,dt);if(banner){banner.life-=dt;if(banner.life<=0)banner=null;}
 }
-function chOf(i){return P&&P[i]?P[i].c:CH[pick[i]];}
-function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==='net')netSend({t:'end',s:netSnap()});SND.play(WATCH||(score[0]>score[1]?0:1)===myI()?'fanfare':'lose');document.getElementById('bBack').hidden=true;const w=score[0]>score[1]?0:1;
+function chOf(i){return P&&P[i]?P[i].c:CH[PK[i]];}
+function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==='net')netSend({t:'end',s:netSnap()});NOFWD=1;SND.play(WATCH||(score[0]>score[1]?0:1)===myI()?'fanfare':'lose');NOFWD=0;document.getElementById('bBack').hidden=true;const w=score[0]>score[1]?0:1;
   document.getElementById('winTxt').textContent=(MODE==='net'?(w===myI()?'🎉 あなた':'あいて')+(w?' 🔵':' 🔴'):(w?'🔵 あいて':'🔴 あなた'))+'（'+chOf(w).icon+chOf(w).name+'）の勝ち！';
   document.getElementById('winTxt').style.color=w?css('--p2'):css('--p1');
   document.getElementById('scoreTxt').textContent=`${score[0]} − ${score[1]}${cpu?(w?'（コンピューターの勝ち）':'（あなたの勝ち）')+'・つよさ '+LVS[MLV||LV].name:''}`;
   const rl=document.getElementById('recLine');rl.textContent='';
-  if(counting()){REC.m++;const c=REC.c[pick[0]]||(REC.c[pick[0]]={w:0,l:0});if(w===0){REC.w++;c.w++;REC.st++;REC.best=Math.max(REC.best,REC.st);}else{REC.l++;c.l++;REC.st=0;}recSave();
+  if(counting()){REC.m++;const c=REC.c[PK[0]]||(REC.c[PK[0]]={w:0,l:0});if(w===0){REC.w++;c.w++;REC.st++;REC.best=Math.max(REC.best,REC.st);}else{REC.l++;c.l++;REC.st=0;}recSave();
     rl.textContent=`通算 ${REC.w}勝${REC.l}敗`+(REC.st>=2?`・いま${REC.st}連勝！`:'')+(REC.st&&REC.st===REC.best&&REC.st>=2?'（さいこう記録）':'');
     const b0=banOf(REC.pt||0);if(w===0)REC.pt=(REC.pt||0)+({yowai:1,futsuu:2,tsuyoi:3}[MLV||LV]||2);const b1=banOf(REC.pt||0);
     let extra='';
@@ -824,16 +831,16 @@ $('bRecClose').onclick=()=>{$('recP').hidden=true;$('title').hidden=false;};
 // 画像を保存：claude.ai のページでは downloads の力で保存（ふつうのリンクは効かない）。手元のファイルではふつうのリンクのまま
 let DL=null;if(window.claude&&window.claude.use){$('aSave').hidden=true;claude.use('downloads').then(d=>{DL=d;if(d)$('aSave').hidden=false;}).catch(()=>{});}
 $('aSave').addEventListener('click',async e=>{if(!DL)return;e.preventDefault();const u=$('aSave').href,b=atob(u.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);
-  try{await DL.save({filename:'anzumou_'+pick[0]+'_'+pick[1]+'.jpg',data:new Blob([a])});}catch(err){if(err&&err.code!=='declined'&&err.code!=='rate_limited')$('aSave').hidden=true;}});
+  try{await DL.save({filename:'anzumou_'+PK[0]+'_'+PK[1]+'.jpg',data:new Blob([a])});}catch(err){if(err&&err.code!=='declined'&&err.code!=='rate_limited')$('aSave').hidden=true;}});
 document.getElementById('bHowClose').onclick=()=>{document.getElementById('howto').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bpr').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,false,true);};
-document.getElementById('bBack').onclick=()=>{netClose();state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
+document.getElementById('bBack').onclick=()=>{netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
 document.getElementById('bw').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,true);};
 document.getElementById('bRe').onclick=()=>{if(MODE==='net'&&NET){if(NET.role==='host')netStart();else{netSend({t:'re'});document.getElementById('scoreTxt').textContent='あいてを 待っています…';}return;}newMatch(cpu,WATCH);};
 document.getElementById('bNet').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('netP').hidden=false;netMsg(NET&&NET.conn&&NET.conn.open?'つながっています':'');};
 document.getElementById('bNetClose').onclick=()=>{netClose();document.getElementById('netP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bHost').onclick=netHost;document.getElementById('bJoin').onclick=netJoin;
-document.getElementById('bMenu').onclick=()=>{netClose();document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();};
+document.getElementById('bMenu').onclick=()=>{netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();};
 const bSnd=document.getElementById('bSnd');bSnd.textContent=SND.on?'🔊':'🔇';bSnd.onclick=e=>{e.stopPropagation();bSnd.textContent=SND.toggle()?'🔊':'🔇';SND.buzz([200,80,300]);};
 newRound();state='menu';requestAnimationFrame(loop);
 if(/[?&]watch/.test(location.search)){const q=new URLSearchParams(location.search);if(q.get('s'))stageSel=q.get('s');if(q.get('a'))pick[0]=q.get('a');if(q.get('b'))pick[1]=q.get('b');if(q.get('s'))stage=q.get('s');newMatch(false,true);}
@@ -844,9 +851,9 @@ if(/[?&]rec/.test(location.search))window.__REC=true;
 
 // ===== バランス確認：コンピューター同士で n 番とって、あかの勝率を返す =====
 window.simulate=function(n=100,a='anzu',b='oni',s='yuki',lv=null){SIMLV=lv;INTRO=0;if(!(R0>50)){R0=322;cx=512;cy=394;}   // 画面が隠れていると R0=0 になり、数字がでたらめになる（2026-11-08 これで一度まちがえた）
-  const keep={pick:[...pick],stage,stageSel,cpu,state,P,score};SIM=true;pick=[a,b];stage=s;stageSel=s;cpu=false;let wins=0;
+  const keep={pick:[...pick],PK:[...PK],stage,stageSel,cpu,state,P,score,MODE,EP,FSTG,MLV};MODE='free';EP=null;FSTG=null;MLV=null;SIM=true;pick=[a,b];PK=[a,b];stage=s;stageSel=s;cpu=false;let wins=0;
   for(let m=0;m<n;m++){score=[0,0];KORA=[1,1];newRound();let g=0;while(state!=='over'&&g<200000){step(1);g++;}if(score[0]>score[1])wins++;}
-  SIM=false;SIMLV=null;pick=keep.pick;stage=keep.stage;stageSel=keep.stageSel;cpu=keep.cpu;state=keep.state;P=keep.P;score=keep.score;
+  SIM=false;SIMLV=null;pick=keep.pick;PK=keep.PK;MODE=keep.MODE;EP=keep.EP;FSTG=keep.FSTG;MLV=keep.MLV;stage=keep.stage;stageSel=keep.stageSel;cpu=keep.cpu;state=keep.state;P=keep.P;score=keep.score;
   return Math.round(wins/n*100);
 };
 </script>
