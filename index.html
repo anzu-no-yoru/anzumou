@@ -63,6 +63,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 <div id="safeB" style="position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none"></div>
 <button id="bBack" class="ghost" hidden style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));font-size:13px;padding:6px 12px;margin:0;background:var(--card)">← メニュー</button>
 <button id="bSnd" class="ghost" aria-label="音のオン・オフ" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">🔊</button>
+<button id="bVib" class="ghost" aria-label="ふるえのオン・オフ" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(116px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">📳</button>
 <button id="bPause" class="ghost" hidden aria-label="一時休止" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(62px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">⏸</button>
 <div class="panel" id="title">
   <div class="box">
@@ -184,8 +185,8 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     </ul>
     <h3>音・ふるえ</h3>
     <ul>
-      <li>右上の 🔊 で音とふるえのオン・オフ。曲は土俵ごとに変わり、土俵がせまくなると少し速くなる。</li>
-      <li>ぶつかる・連打・必殺技・落ちる・勝ち負けのときにスマホがふるえる（Android のみ。iPhone のブラウザはふるえない）。</li>
+      <li>右上の 🔊 で音、📳 でふるえのオン・オフ（別々）。曲は土俵ごとに変わり、土俵がせまくなると少し速くなる。</li>
+      <li>ぶつかる・必殺技・落ちる・勝ち負けのときにスマホが少しふるえる（Android のみ。iPhone のブラウザはふるえない）。うるさければ 📳 でオフに。</li>
       <li>iPhone は、横の「消音スイッチ」がオンだと音が出ないことがある。</li>
     </ul>
     <h3>きろく・結果の画像</h3>
@@ -325,7 +326,7 @@ function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&
 
 // ===== 音（Web Audio でその場で作る・音のファイルは使わない。2026-11-08 だいさん「音楽ないの？効果音とか」） =====
 const SND=(()=>{let ac=null,master,sfxG,bgmG,nb,on=true,next=0,stp=0,phrase=null,pkey='';
-  try{on=localStorage.getItem('anzumou_snd')!=='off';}catch(e){}
+  try{on=localStorage.getItem('anzumou_snd')!=='off';}catch(e){}let vib=true;try{vib=localStorage.getItem('anzumou_vib')!=='off';}catch(e){}   // ふるえは音とは別にオン・オフ（2026-11-10）
   function init(){if(ac)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;ac=new AC();
     master=ac.createGain();master.gain.value=on?1:0;master.connect(ac.destination);
     sfxG=ac.createGain();sfxG.gain.value=0.75;sfxG.connect(master);bgmG=ac.createGain();bgmG.gain.value=0.2;bgmG.connect(master);
@@ -370,9 +371,9 @@ const SND=(()=>{let ac=null,master,sfxG,bgmG,nb,on=true,next=0,stp=0,phrase=null
     lose(){const t=now(),f=[659,587,523,440];f.forEach((x,k)=>pluck(x,t+k*0.14,0.26,0.5,sfxG));},
     fanfare(){const t=now(),f=[523,659,784,1047,784,1047,1319];f.forEach((x,k)=>pluck(x,t+k*0.12,0.34,0.7,sfxG));[0,0.48,0.72].forEach(d=>taiko(t+d,0.6,sfxG));},
   };
-  const VB={pita:()=>80,hit:a=>Math.round(Math.min(220,100+(a||1)*15)),grip:()=>60,out:()=>400,wan:()=>220,jump:()=>[120,60,120],kana:()=>260,pon:()=>200,kozuchi:()=>[90,40,90,40,180],clash:()=>[200,70,200,70,260],koraeta:()=>[150,60,250],utchari:()=>[200,70,400],fanfare:()=>[250,90,250,90,500],win:()=>[180,70,300],lose:()=>450};
-  function buzz(ms){if(on&&!SIM&&!WATCH)try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
-  function play(k,a){if(on&&!SIM&&!WATCH&&VB[k])try{if(navigator.vibrate)navigator.vibrate(VB[k](a));}catch(e){}   // ふるえ：Android のみ（iPhone のブラウザはふるえない）
+  const VB={pita:()=>40,hit:a=>Math.round(Math.min(120,50+(a||1)*8)),out:()=>250,wan:()=>140,jump:()=>[70,50,70],kana:()=>170,pon:()=>120,kozuchi:()=>[60,40,60,40,110],clash:()=>[120,60,160],koraeta:()=>[90,60,160],utchari:()=>[120,60,250],fanfare:()=>[150,80,150,80,300],win:()=>[120,70,200],lose:()=>280};   // 2026-11-10 だいさん「ぶるぶるうるさい」→ 連打（grip）では鳴らさず、全体を約4〜5割短く
+  function buzz(ms){if(vib&&!SIM&&!WATCH)try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
+  function play(k,a){if(vib&&!SIM&&!WATCH&&VB[k])try{if(navigator.vibrate)navigator.vibrate(VB[k](a));}catch(e){}   // ふるえ：Android のみ（iPhone のブラウザはふるえない）
     if(!ok())return;try{fx[k](a);}catch(e){console.warn('snd',k,e);}}
   // 曲：土俵ごとに音階と速さを変える（土＝明るい陽の音階・雪＝都節で鈴・宇宙＝ゆっくりの和音）。土俵がせまくなると少し速く
   const SC={tsuchi:{root:293.66,sc:[0,2,5,7,9],bpm:116,drum:2,inst:'koto'},yuki:{root:392,sc:[0,1,5,7,8],bpm:92,drum:1,inst:'bell'},uchu:{root:220,sc:[0,2,4,7,9],bpm:66,drum:0,inst:'pad'},sabaku:{root:277.18,sc:[0,1,4,5,7],bpm:100,drum:1,inst:'koto'},umi:{root:329.63,sc:[0,2,4,7,9],bpm:84,drum:0,inst:'bell'}};
@@ -394,7 +395,8 @@ const SND=(()=>{let ac=null,master,sfxG,bgmG,nb,on=true,next=0,stp=0,phrase=null
     if(ac){if(on)ac.resume();else ac.suspend();}return on;}
   document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend();else if(on)ac.resume();});
   function hold(v){if(!ac)return;if(v)ac.suspend();else if(on)ac.resume();}   // 一時休止の間は 音も止める
-  return{unlock,play,toggle,buzz,hold,get on(){return on;}};
+  function toggleVib(){vib=!vib;try{localStorage.setItem('anzumou_vib',vib?'on':'off');}catch(e){}return vib;}
+  return{unlock,play,toggle,toggleVib,buzz,hold,get on(){return on;},get vib(){return vib;}};
 })();
 for(const ev of['pointerdown','keydown'])addEventListener(ev,()=>SND.unlock(),{capture:true});
 document.addEventListener('click',e=>{if(e.target.closest('button'))SND.play('click');});
@@ -459,7 +461,7 @@ function dash(p,mul=1){
 function tap(i){if(state!=='play')return;const p=P[i];if(p.cd>0||p.out||p.fun>0)return;if(i===0&&TUT===1){TUT=2;tutT=0;}
   const op=P[1-i],pt=!op.out&&angDiff(p.ang,Math.atan2(op.y-p.y,op.x-p.x))<=PITA_A;   // 「ピタッ！」真芯（2026-11-09 Fable のレビューで）：矢印が あいての ど真ん中なら 突進が少し強い。コンピューターも同じ
   ST.taps[i]++;if(op.cd>0)ST.pun[i]++;
-  dash(p,pt?PITA_MUL:1);p.cd=p.c.cd;if(pt){pita[i]++;if(!SIM){p.pitaT=30;SND.play(i===myI()?'pita':'pita2');}}else if(i===0)SND.buzz(45);}
+  dash(p,pt?PITA_MUL:1);p.cd=p.c.cd;if(pt){pita[i]++;if(!SIM){p.pitaT=30;SND.play(i===myI()?'pita':'pita2');}}}
 function special(i){
   if(state!=='play')return;const p=P[i];if(p.out||p.spUsed||p.spLock>0)return;p.spUsed=true;ST.sp[i]++;if(i===0&&TUT===2)tutEnd();   // 始まってすぐの必殺技はなし（向かい合ったまま突っ込むと相手が何もできない）
   const k=p.c.key;
@@ -518,7 +520,7 @@ function useSkill(i,k){if(state!=='play'||!P||CL||UT||INTRO>0)return false;const
   else if(k==='dodge'){const op=P[1-i],a=Math.atan2(op.y-p.y,op.x-p.x),dv=R0*0.032/Math.sqrt(p.c.mass)*(STG[stage].speed||1);
     let best=null;for(const sg of[1,-1]){const b=a+sg*Math.PI/2,ex=p.x+Math.cos(b)*R0*0.3,ey=p.y+Math.sin(b)*R0*0.3,d=Math.hypot(ex-cx,ey-cy);if(!best||d<best.d)best={b,d};}
     p.vx+=Math.cos(best.b)*dv;p.vy+=Math.sin(best.b)*dv;p.sq=0.6;if(!SIM)SND.play('jump');}
-  if(i===myI())SND.buzz(50);return true;}
+  if(i===myI())SND.buzz(30);return true;}
 // 必殺技ボタンの 左右に 技のボタン（えらんだものだけ）
 function skBtns(){const b=spBtn();if(!b)return[];const p=P[myI()];if(!p||!p.sks)return[];const r=b.r*0.72,out=[],corner=b.x!==cx;
   const xs=corner?[b.x-b.r*4.0,b.x-b.r*2.15]:[b.x-b.r*2.25,b.x+b.r*2.25];
@@ -554,9 +556,9 @@ addEventListener('keyup',e=>{const k=e.key.toLowerCase();
 const ptr={};
 cv.addEventListener('pointerdown',e=>{e.preventDefault();if(PAUSE){setPause(false);return;}if(STP){stampTap(e);return;}
   if(!CL&&!UT&&state==='play'&&!WATCH){const k=inSkBtn(e);if(k){if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'skl',k});else useSkill(0,k);return;}}
-  if(NET&&NET.role==='guest'&&MODE==='net'){if(INTRO>30){netSend({t:'sk'});return;}if(!CL&&state==='play'&&inSpBtn(e)){if(spReady()){netSend({t:'sp'});SND.buzz(80);}return;}ptr[e.pointerId]=1;netSend({t:'d'});return;}
+  if(NET&&NET.role==='guest'&&MODE==='net'){if(INTRO>30){netSend({t:'sk'});return;}if(!CL&&state==='play'&&inSpBtn(e)){if(spReady()){netSend({t:'sp'});SND.buzz(40);}return;}ptr[e.pointerId]=1;netSend({t:'d'});return;}
   if(INTRO>30){INTRO=30;return;}if(WATCH)return;
-  if(!CL&&!UT&&state==='play'&&inSpBtn(e)){if(spReady()){special(0);SND.buzz(80);}return;}   // 必殺技ボタン（連打合戦の間は どこでも連打）
+  if(!CL&&!UT&&state==='play'&&inSpBtn(e)){if(spReady()){special(0);SND.buzz(40);}return;}   // 必殺技ボタン（連打合戦の間は どこでも連打）
   ptr[e.pointerId]=0;down(0);});
 for(const ev of['pointerup','pointercancel'])cv.addEventListener(ev,e=>{const i=ptr[e.pointerId];if(i!=null){if(NET&&NET.role==='guest'&&MODE==='net')netSend({t:'u'});else up(i);delete ptr[e.pointerId];}});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -998,7 +1000,8 @@ bPause.onclick=e=>{e.stopPropagation();setPause(!PAUSE);};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&!bPause.hidden&&state==='play')setPause(true);});
 function drawPause(){ctx.save();ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,14,10,.92)';const bw=Math.min(W-40,R0*1.5),bh=R0*0.55;ctx.beginPath();ctx.roundRect(cx-bw/2,cy-bh/2,bw,bh,18);ctx.fill();ctx.textAlign='center';ctx.fillStyle='#fff6e6';
   ctx.font=`900 ${Math.max(30,R0*0.18)}px sans-serif`;ctx.fillText('⏸ ひとやすみ',cx,cy-bh*0.05);ctx.font=`${Math.max(15,R0*0.07)}px sans-serif`;ctx.globalAlpha=.85;ctx.fillText('タップで つづける',cx,cy+bh*0.3);ctx.restore();}
-const bSnd=document.getElementById('bSnd');bSnd.textContent=SND.on?'🔊':'🔇';bSnd.onclick=e=>{e.stopPropagation();bSnd.textContent=SND.toggle()?'🔊':'🔇';SND.buzz([200,80,300]);};
+const bVib=document.getElementById('bVib');bVib.textContent=SND.vib?'📳':'📴';bVib.onclick=e=>{e.stopPropagation();bVib.textContent=SND.toggleVib()?'📳':'📴';SND.buzz([80,60,120]);};
+const bSnd=document.getElementById('bSnd');bSnd.textContent=SND.on?'🔊':'🔇';bSnd.onclick=e=>{e.stopPropagation();bSnd.textContent=SND.toggle()?'🔊':'🔇';};
 newRound();state='menu';requestAnimationFrame(loop);
 if(/[?&]watch/.test(location.search)){const q=new URLSearchParams(location.search);if(q.get('s'))stageSel=q.get('s');if(q.get('a'))pick[0]=q.get('a');if(q.get('b'))pick[1]=q.get('b');if(q.get('s'))stage=q.get('s');newMatch(false,true);}
 
