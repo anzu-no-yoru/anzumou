@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
 <title>あんずもう</title>
 <meta name="description" content="ねむる犬あんずが見る、むかしばなしの夢の相撲。ボタン1つで遊べます。">
 <meta property="og:title" content="あんずもう ── あんずの夢の土俵">
@@ -17,7 +17,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;position:fixed;inset:0;width:100%;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 canvas#cv{display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;touch-action:none}   /* 高さは fit() が innerHeight の px で上書きする（Android は 100vh がアドレスバーを隠した高さで、下が切れた・2026-11-09） */
-.panel{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.28);overflow:auto;padding:52px 0 16px}
+.panel{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.28);overflow:auto;padding:calc(52px + env(safe-area-inset-top,0px)) 0 calc(16px + env(safe-area-inset-bottom,0px))}   /* 下の余白＝ジェスチャーバーの分（Android の Chrome はアドレスバーが隠れると画面の一番下まで広がる・2026-11-09） */
 .panel[hidden]{display:none}
 .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px;width:min(420px,calc(100% - 24px));text-align:center;margin:auto}
 .box h1{margin:0 0 2px;font-size:28px}
@@ -213,9 +213,11 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 <script>
 const cv=document.getElementById('cv');let ctx=cv.getContext('2d');
 let W,H,R0,cx,cy,dpr,SAFEB=0;
+// 画面の下の安全な余白（Android のジェスチャーバー・iPhone のホームバー）。Android の Chrome はアドレスバーが隠れるとページを画面の一番下まで広げ、その分を env(safe-area-inset-bottom) で教えてくる（viewport-fit=cover が要る）。値はあとから変わるので、描くたびに読み直す（2026-11-09 だいさん「何回か遊ぶと下が切れる」）
+function readSafe(){try{SAFEB=document.getElementById('safeB').offsetHeight||0;}catch(e){SAFEB=0;}}
 // 描く大きさ＝実際に見えている大きさ（innerHeight）。CSS の 100vh のままだと Android で下が切れる（アドレスバーの分だけ縦に伸びる）ので、表示の高さも同じ px にそろえる（2026-11-09 だいさん「画面の下が切れる」）
 function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
-  try{SAFEB=document.getElementById('safeB').offsetHeight||0;}catch(e){SAFEB=0;}   // 画面の下の安全な余白（ホームバーなど）
+  readSafe();
   R0=Math.min(W,H)*0.42;cx=W/2;cy=H/2+10;
   // 試合の途中で 画面を回したとき：2人の場所・大きさ・土俵を 新しい大きさに合わせる（前は2人とも土俵の外になり 点が入った・2026-11-09）
   try{if(P&&oR>0&&R0>0&&(oR!==R0||ox!==cx||oy!==cy)){const k=R0/oR,mv=o=>{o.x=cx+(o.x-ox)*k;o.y=cy+(o.y-oy)*k;};
@@ -787,13 +789,13 @@ function draw(t){
   if(STP)drawStamps(t);if(P)drawStampBubbles(t);
   if(MODE==='net'&&P&&(state==='ready'||INTRO>0)&&!(INTRO>0)){const me=P[myI()];ctx.save();ctx.font=`900 ${Math.max(18,R0*0.08)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd166';ctx.strokeText('▼ あなた',me.x,me.y-me.r*1.9);ctx.fillText('▼ あなた',me.x,me.y-me.r*1.9);ctx.restore();}
   if(TUT&&P&&(state==='play'||state==='ready')){const me=P[0],lines=TUT===1?['矢印が あいてを向いたら','「ちょん」と タップ！ 👆']:['こんどは 下の 丸ボタンで 必殺技！ 👇','（ぐっと長押し でも出る）'];
-    ctx.font=`bold ${Math.max(16,Math.min(21,W/20))}px sans-serif`;ctx.textAlign='center';const tw=Math.min(W-24,Math.max(...lines.map(l=>ctx.measureText(l).width))+36),lh=Math.max(22,Math.min(28,W/15)),bh=lh*2+18,by=Math.min(H-bh-12,cy+R0+34);
+    ctx.font=`bold ${Math.max(16,Math.min(21,W/20))}px sans-serif`;ctx.textAlign='center';const tw=Math.min(W-24,Math.max(...lines.map(l=>ctx.measureText(l).width))+36),lh=Math.max(22,Math.min(28,W/15)),bh=lh*2+18,by=Math.min(H-SAFEB-bh-12,cy+R0+34);
     ctx.fillStyle='rgba(20,16,30,.85)';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-tw/2,by,tw,bh,14);else ctx.rect(cx-tw/2,by,tw,bh);ctx.fill();
     ctx.fillStyle='#ffd166';lines.forEach((l,k)=>ctx.fillText(l,cx,by+lh*(k+1)+2));
     if(TUT===1&&state==='play'){const tx=me.x+Math.cos(me.ang)*me.r*1.85,ty=me.y+Math.sin(me.ang)*me.r*1.85,good=angDiff(me.ang,Math.atan2(P[1].y-me.y,P[1].x-me.x))<0.35;
       ctx.strokeStyle=good?'#7cfc9a':'#ffd166';ctx.lineWidth=4;ctx.globalAlpha=.6+.4*Math.sin(t/120);ctx.beginPath();ctx.arc(tx,ty,me.r*0.5+(good?8:0),0,7);ctx.stroke();ctx.globalAlpha=1;
       if(good){ctx.font=`900 ${Math.max(24,R0*0.11)}px sans-serif`;ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#7cfc9a';ctx.strokeText('いま！',me.x,me.y-me.r-30);ctx.fillText('いま！',me.x,me.y-me.r-30);}}}
-  if(state==='play'&&PRACTICE){ctx.font='14px sans-serif';ctx.fillStyle=th?th.txt:css('--sub');ctx.fillText('土俵＝突進　丸ボタン・長押し＝必殺技（何回でも）',cx,H-22);}
+  if(state==='play'&&PRACTICE){ctx.font='14px sans-serif';ctx.fillStyle=th?th.txt:css('--sub');ctx.fillText('土俵＝突進　丸ボタン・長押し＝必殺技（何回でも）',cx,H-SAFEB-22);}
   ctx.restore();
   if(INTRO>0&&P)drawDream(t);
 }
@@ -870,7 +872,8 @@ function drawPoyo(p,t){
     ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=9;ctx.strokeStyle='#fff';ctx.stroke();ctx.lineWidth=5;ctx.strokeStyle=p.team;ctx.stroke();ctx.globalAlpha=1;}
   ctx.restore();
 }
-function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest')&&!PAUSE)step(dt);
+let safeK=0;
+function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if((safeK++%20)===0)readSafe();if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest')&&!PAUSE)step(dt);
   if(NET&&NET.role==='host'&&MODE==='net'&&P&&state!=='menu'&&state!=='over'&&(netK++%2===0))netSend(netSnap());draw(t);
   bPause.hidden=!(P&&state!=='menu'&&state!=='over'&&MODE!=='net'&&!SIM);if(PAUSE)drawPause();
   if(!document.getElementById('title').hidden)drawVs(t);if(!document.getElementById('pickP').hidden)drawPv(t);requestAnimationFrame(loop);}
