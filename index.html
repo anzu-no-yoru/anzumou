@@ -31,7 +31,7 @@ button.go{font-family:inherit;font-size:17px;font-weight:700;border:none;border-
 button.go.b2{background:var(--p2)}
 button.ghost{font-family:inherit;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:12px;font-size:15px;padding:10px 16px;margin:5px 3px;cursor:pointer}
 kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:12px}
-.win{font-size:34px;font-weight:800;margin:4px 0}
+.win{font-size:clamp(20px,6.5vw,30px);font-weight:800;margin:4px 0;line-height:1.25}
 .how{text-align:left;max-height:calc(100% - 24px);overflow:auto}
 .how h2{font-size:22px;margin:0 0 8px;text-align:center}
 .how h3{font-size:15px;margin:14px 0 4px}
@@ -49,7 +49,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 .ch canvas{display:block;width:100%;height:50px;margin:0 auto}
 .ch span{display:block;font-size:12px;line-height:1.25}
 #pvCv{width:100%;height:120px;display:block;border-radius:12px;background:rgba(128,112,95,.12);margin:4px 0}
-.card{display:block;max-width:100%;max-height:42vh;margin:8px auto 2px;border-radius:12px;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
+.card{display:block;max-width:100%;max-height:28vh;margin:8px auto 2px;border-radius:12px;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
 .rec{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
 .rec td{border-top:1px solid var(--line);padding:6px 4px}
 .rec td:not(:first-child){text-align:right}
@@ -206,9 +206,10 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <p id="recLine" style="font-weight:700"></p>
     <div class="tip" id="tipBox" hidden><b>🐩</b><div><span id="tipTxt"></span><br><button id="bTipLv" class="ghost" hidden style="font-size:13px;padding:6px 10px;margin:4px 0 0"></button></div></div>
     <p style="font-style:italic;color:var(--sub)" id="dreamLine">…という、あんずの夢でした 🐩💤</p>
+    <div><button id="bRe" class="go">もう一番</button><button class="ghost" id="bMenu">メニューへ</button></div>
     <img id="cardImg" class="card" alt="結果の画像">
     <p id="cardHint">画像を長押しすると保存できます（インスタに投稿するときに）</p>
-    <button id="bRe" class="go">もう一番</button><button class="ghost" id="bMenu">メニューへ</button><a id="aSave" class="ghost" download="anzumou.jpg" style="display:inline-block;text-decoration:none;font-size:15px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;color:var(--ink);margin:5px 3px">画像を保存</a><button class="ghost" id="bShare">結果を送る</button>
+    <a id="aSave" class="ghost" download="anzumou.jpg" style="display:inline-block;text-decoration:none;font-size:15px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;color:var(--ink);margin:5px 3px">画像を保存</a><button class="ghost" id="bShare">結果を送る</button>
   </div>
 </div>
 <script>
@@ -219,7 +220,7 @@ function readSafe(){try{SAFEB=document.getElementById('safeB').offsetHeight||0;}
 // 描く大きさ＝実際に見えている大きさ（innerHeight）。CSS の 100vh のままだと Android で下が切れる（アドレスバーの分だけ縦に伸びる）ので、表示の高さも同じ px にそろえる（2026-11-09 だいさん「画面の下が切れる」）
 function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
   readSafe();
-  R0=Math.min(W,H)*0.42;cx=W/2;cy=H/2+10;
+  if(H>W){R0=Math.max(80,Math.min(W*0.46,(H-280)/2));cy=H/2+5;}else R0=Math.min(W,H)*0.42,cy=H/2+10;cx=W/2;   // 縦画面（スマホ）は土俵を大きく：上の空白が大きかった（2026-11-10 だいさん）
   // 試合の途中で 画面を回したとき：2人の場所・大きさ・土俵を 新しい大きさに合わせる（前は2人とも土俵の外になり 点が入った・2026-11-09）
   try{if(P&&oR>0&&R0>0&&(oR!==R0||ox!==cx||oy!==cy)){const k=R0/oR,mv=o=>{o.x=cx+(o.x-ox)*k;o.y=cy+(o.y-oy)*k;};
     for(const p of P){mv(p);p.vx*=k;p.vy*=k;p.r*=k;p.r0*=k;}ringR*=k;parts.forEach(mv);
@@ -667,7 +668,7 @@ function step(dt){
 }
 function chOf(i){return P&&P[i]?P[i].c:CH[PK[i]];}
 function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==='net')netSend({t:'end',s:netSnap()});NOFWD=1;SND.play(WATCH||(score[0]>score[1]?0:1)===myI()?'fanfare':'lose');NOFWD=0;document.getElementById('bBack').hidden=true;const w=score[0]>score[1]?0:1;
-  document.getElementById('winTxt').textContent=(MODE==='net'?(w===myI()?'🎉 あなた':'あいて')+(w?' 🔵':' 🔴'):(w?'🔵 あいて':'🔴 あなた'))+'（'+chOf(w).icon+chOf(w).name+'）の勝ち！';
+  document.getElementById('winTxt').textContent=MODE==='net'?(w===myI()?'🎉 あなたの勝ち！':'あいての勝ち…')+'（'+chOf(w).icon+chOf(w).name+'）':(w?'🔵 ':'🔴 ')+chOf(w).icon+chOf(w).name+' の勝ち！';   // 1行に（あなた／あいては下の行に出る・2026-11-10）
   document.getElementById('winTxt').style.color=w?css('--p2'):css('--p1');
   document.getElementById('scoreTxt').textContent=`${score[0]} − ${score[1]}${cpu?(w?'（コンピューターの勝ち）':'（あなたの勝ち）')+'・つよさ '+LVS[MLV||LV].name:''}`+(WATCH?'':`・ピタッ ${pita[myI()]}回`);lastW=w;
   const rl=document.getElementById('recLine');rl.textContent='';
@@ -739,8 +740,8 @@ function draw(t){
   if(th){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,th.bg[0]);g.addColorStop(1,th.bg[1]);ctx.fillStyle=g;}else ctx.fillStyle=css('--bg');
   ctx.fillRect(0,0,W,H);
   if(th&&th.stars){for(let k=0;k<90;k++){const x=(k*137.5)%W,y=(k*91.7)%H;ctx.globalAlpha=.35+.5*Math.abs(Math.sin(t/700+k));ctx.fillStyle='#fff';ctx.fillRect(x,y,k%7?1.5:2.5,k%7?1.5:2.5);}ctx.globalAlpha=1;
-    ctx.fillStyle='#3a6ab8';ctx.beginPath();ctx.arc(W*0.86,H*0.14,R0*0.16,0,7);ctx.fill();ctx.fillStyle='#5aa05a';ctx.beginPath();ctx.ellipse(W*0.85,H*0.13,R0*0.07,R0*0.05,0.5,0,7);ctx.fill();}
-  if(th&&th.sun){ctx.fillStyle='#fff3c4';ctx.beginPath();ctx.arc(W*0.85,H*0.14,R0*0.13,0,7);ctx.fill();ctx.fillStyle='rgba(190,120,60,.35)';
+    ctx.globalAlpha=0.5;ctx.fillStyle='#3a6ab8';ctx.beginPath();ctx.arc(W*0.86,H*0.14,R0*0.16,0,7);ctx.fill();ctx.fillStyle='#5aa05a';ctx.beginPath();ctx.ellipse(W*0.85,H*0.13,R0*0.07,R0*0.05,0.5,0,7);ctx.fill();ctx.globalAlpha=1;}   // 薄く：縦画面で HUD の裏になる（2026-11-10）
+  if(th&&th.sun){ctx.globalAlpha=0.5;ctx.fillStyle='#fff3c4';ctx.beginPath();ctx.arc(W*0.85,H*0.14,R0*0.13,0,7);ctx.fill();ctx.globalAlpha=1;ctx.fillStyle='rgba(190,120,60,.35)';
     for(const [x,w] of[[0.15,0.5],[0.7,0.6]]){ctx.beginPath();ctx.ellipse(W*x,H*0.97,W*w,H*0.12,0,Math.PI,0);ctx.fill();}}
   if(th&&th.waves){ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;for(let k=0;k<14;k++){const y=(k*67)%H,x0=((k*131)+t*0.02*(k%3+1))%(W+120)-60;
     ctx.beginPath();for(let q=0;q<4;q++){ctx.moveTo(x0+q*16+8,y);ctx.arc(x0+q*16,y,8,0,Math.PI,true);}ctx.stroke();}}
