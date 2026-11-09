@@ -15,8 +15,8 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1714;--ink:#f2e8db;--sub:#b3a18c;--card:#27211c;--line:#3c332b;--ring:#5a4930;--ringline:#c9a265}}
 :root[data-theme="dark"]{--bg:#1b1714;--ink:#f2e8db;--sub:#b3a18c;--card:#27211c;--line:#3c332b;--ring:#5a4930;--ringline:#c9a265}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
-canvas#cv{display:block;width:100vw;height:100vh;height:100dvh;touch-action:none}   /* 高さは fit() が innerHeight の px で上書きする（Android は 100vh がアドレスバーを隠した高さで、下が切れた・2026-11-09） */
+html,body{margin:0;height:100%;position:fixed;inset:0;width:100%;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+canvas#cv{display:block;position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;touch-action:none}   /* 高さは fit() が innerHeight の px で上書きする（Android は 100vh がアドレスバーを隠した高さで、下が切れた・2026-11-09） */
 .panel{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.28);overflow:auto;padding:52px 0 16px}
 .panel[hidden]{display:none}
 .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px;width:min(420px,calc(100% - 24px));text-align:center;margin:auto}
@@ -222,6 +222,8 @@ function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=inn
     for(const p of P){mv(p);p.vx*=k;p.vy*=k;p.r*=k;p.r0*=k;}ringR*=k;parts.forEach(mv);
     if(UT){const m={x:UT.mx,y:UT.my};mv(m);UT.mx=m.x;UT.my=m.y;UT.rad*=k;}}}catch(e){}}
 addEventListener('resize',fit);if(window.visualViewport)visualViewport.addEventListener('resize',fit);fit();
+// スマホで指を上下に動かしてもページが動かないように（引っぱって更新・跳ねる・アドレスバーの出入り）。あそびかた などの .panel の中だけはスクロールできる（2026-11-09 だいさん「画面を上下に動かすと動く」）
+document.addEventListener('touchmove',e=>{if(!e.target.closest||!e.target.closest('.panel'))e.preventDefault();},{passive:false});
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 // ===== キャラと土俵 =====
