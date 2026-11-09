@@ -16,7 +16,7 @@
 :root[data-theme="dark"]{--bg:#1b1714;--ink:#f2e8db;--sub:#b3a18c;--card:#27211c;--line:#3c332b;--ring:#5a4930;--ringline:#c9a265}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
-canvas{display:block;width:100vw;height:100vh;touch-action:none}
+canvas#cv{display:block;width:100vw;height:100vh;height:100dvh;touch-action:none}   /* 高さは fit() が innerHeight の px で上書きする（Android は 100vh がアドレスバーを隠した高さで、下が切れた・2026-11-09） */
 .panel{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.28);overflow:auto;padding:52px 0 16px}
 .panel[hidden]{display:none}
 .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px;width:min(420px,calc(100% - 24px));text-align:center;margin:auto}
@@ -60,6 +60,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 </head>
 <body>
 <canvas id="cv"></canvas>
+<div id="safeB" style="position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none"></div>
 <button id="bBack" class="ghost" hidden style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));font-size:13px;padding:6px 12px;margin:0;background:var(--card)">← メニュー</button>
 <button id="bSnd" class="ghost" aria-label="音のオン・オフ" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(8px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">🔊</button>
 <button id="bPause" class="ghost" hidden aria-label="一時休止" style="position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:calc(62px + env(safe-area-inset-right,0px));font-size:16px;padding:5px 10px;margin:0;background:var(--card);z-index:20">⏸</button>
@@ -211,14 +212,16 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 </div>
 <script>
 const cv=document.getElementById('cv');let ctx=cv.getContext('2d');
-let W,H,R0,cx,cy,dpr;
-function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+let W,H,R0,cx,cy,dpr,SAFEB=0;
+// 描く大きさ＝実際に見えている大きさ（innerHeight）。CSS の 100vh のままだと Android で下が切れる（アドレスバーの分だけ縦に伸びる）ので、表示の高さも同じ px にそろえる（2026-11-09 だいさん「画面の下が切れる」）
+function fit(){const oR=R0,ox=cx,oy=cy;dpr=Math.max(1,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
+  try{SAFEB=document.getElementById('safeB').offsetHeight||0;}catch(e){SAFEB=0;}   // 画面の下の安全な余白（ホームバーなど）
   R0=Math.min(W,H)*0.42;cx=W/2;cy=H/2+10;
   // 試合の途中で 画面を回したとき：2人の場所・大きさ・土俵を 新しい大きさに合わせる（前は2人とも土俵の外になり 点が入った・2026-11-09）
   try{if(P&&oR>0&&R0>0&&(oR!==R0||ox!==cx||oy!==cy)){const k=R0/oR,mv=o=>{o.x=cx+(o.x-ox)*k;o.y=cy+(o.y-oy)*k;};
     for(const p of P){mv(p);p.vx*=k;p.vy*=k;p.r*=k;p.r0*=k;}ringR*=k;parts.forEach(mv);
     if(UT){const m={x:UT.mx,y:UT.my};mv(m);UT.mx=m.x;UT.my=m.y;UT.rad*=k;}}}catch(e){}}
-addEventListener('resize',fit);fit();
+addEventListener('resize',fit);if(window.visualViewport)visualViewport.addEventListener('resize',fit);fit();
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 // ===== キャラと土俵 =====
@@ -522,9 +525,9 @@ function drawSkBtns(t){if(state==='menu'||state==='over')return;const p=P[myI()]
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.font=`${Math.round(b.r*0.72)}px sans-serif`;ctx.fillText(SKS[b.k].icon,b.x,b.y-b.r*0.16);
   ctx.font=`bold ${Math.round(b.r*0.3)}px sans-serif`;ctx.fillText(SKS[b.k].name+' ×'+n,b.x,b.y+b.r*0.55);ctx.textBaseline='alphabetic';ctx.restore();}}
 function inSkBtn(e){const rc=cv.getBoundingClientRect(),x=(e.clientX-rc.left)*W/rc.width,y=(e.clientY-rc.top)*H/rc.height;for(const b of skBtns())if(Math.hypot(x-b.x,y-b.y)<b.r+10)return b.k;return null;}
-function spBtn(){if(!P||WATCH)return null;const below=H-(cy+R0),r=below>=120?Math.max(38,Math.min(56,below*0.22)):Math.max(30,Math.min(46,R0*0.15));
-  if(below>=r*2+40)return{x:cx,y:H-r-Math.max(18,(below-r*2)*0.25),r};
-  if(W-(cx+R0)>=r*2+30)return{x:W-r-22,y:H-r-22,r};return{x:W-r-14,y:H-r-14,r:r*0.85};}
+function spBtn(){if(!P||WATCH)return null;const HB=H-SAFEB,below=HB-(cy+R0),r=below>=120?Math.max(38,Math.min(56,below*0.22)):Math.max(30,Math.min(46,R0*0.15));   // HB＝下の安全な余白を引いた高さ
+  if(below>=r*2+40)return{x:cx,y:HB-r-Math.max(18,(below-r*2)*0.25),r};
+  if(W-(cx+R0)>=r*2+30)return{x:W-r-22,y:HB-r-22,r};return{x:W-r-14,y:HB-r-14,r:r*0.85};}
 function spReady(){const p=P&&P[myI()];return p&&state==='play'&&!p.out&&!p.spUsed&&!(p.spLock>0);}
 function drawSpBtn(t){const b=spBtn();if(!b||state==='menu'||state==='over')return;const p=P[myI()],ok=spReady();
   ctx.save();ctx.globalAlpha=ok?1:0.35;ctx.fillStyle='rgba(20,16,30,.8)';ctx.beginPath();ctx.arc(b.x,b.y,b.r+5,0,7);ctx.fill();
