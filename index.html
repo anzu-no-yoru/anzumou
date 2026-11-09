@@ -195,7 +195,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <h3>🌤 夢の天気（毎日かわる・世界じゅう同じ）</h3>
     <ul>
       <li>ホームに「今夜の夢の天気」が出る。<b>たいせん</b>と<b>きょうの取組</b>にだけ効く（ものがたり・ネット・れんしゅう・見る は いつもどおり）。</li>
-      <li>☀️ はれ … いつもどおり。🌧️ 雨 … 土俵がぬれて すべる。🌬️ 風 … ゆっくり向きを変える風に 少し流される（白い すじが風の向き）。</li>
+      <li>☀️ はれ … いつもどおり。🌧️ 雨 … 土俵がぬれて すべる（土と砂漠で。雪・海・宇宙は もともと つるつるなので 見た目だけ）。🌬️ 風 … ゆっくり向きを変える風に 少し流される（白い すじが風の向き）。</li>
       <li>🌕 <b>本物の満月の夜</b>（前後1日）は、<b>必殺技が1番に2回</b>使える（名前の下の ★★）。</li>
     </ul>
     <h3>あそぶ形</h3>
@@ -285,9 +285,9 @@ const CH={
 const STG={
   tsuchi:{name:'土の土俵',icon:'🟫',fric:0.955,desc:'ふつうの土俵'},
   yuki:{name:'雪の夜',icon:'❄️',fric:0.976,edge:0.86,desc:'つるつる。止まりにくい。土俵ぎわは雪だまりで少しブレーキ'},
-  sabaku:{name:'砂漠',icon:'🏜️',fric:0.93,speed:0.8,desc:'砂で足が重い。動きがゆっくりで、すぐ止まる'},
-  umi:{name:'海',icon:'🌊',fric:0.978,shell:0.94,desc:'ぬれた砂でつるつる。土俵ぎわは貝がらの上で、どの向きにも遅くなる'},
-  uchu:{name:'宇宙',icon:'🌌',fric:0.993,speed:0.6,desc:'重さがなく、ふわふわゆっくり。いちど動くと なかなか止まらない'},
+  sabaku:{name:'砂漠',icon:'🏜️',fric:0.93,speed:0.8,desc:'砂で すぐ止まる。突進は ズザッと速くて短い'},
+  umi:{name:'海',icon:'🌊',fric:0.978,shell:0.97,desc:'ぬれた砂でつるつる。土俵ぎわは貝がらの上で、どの向きにも遅くなる'},
+  uchu:{name:'宇宙',icon:'🌌',fric:0.982,speed:0.6,desc:'重さがなく、ふわふわゆっくり。いちど動くと なかなか止まらない'},
 };
 // コンピューターの強さ（2026-11-08）：反応のおそさ・ねらいの甘さ・必殺技を使う早さ・連打の速さ
 const LVS={yowai:{name:'よわい',icon:'🌱',desc:'ゆっくり考える。ねらいが甘い。はじめての人に',wait:26,rnd:40,tol:[0.45,0.45],sp:0.04,mash:0.7,safe:0.7,skUse:0.3},
@@ -361,7 +361,7 @@ function wxToday(){const q=new URLSearchParams(location.search);let w=q.get('w')
 function wxName(x){return (x.moon?'🌕 満月の ':'')+WXS[x.w].icon+WXS[x.w].name;}
 let WX={w:'hare',moon:false,on:false},WIND_A=0,DEEP=0;   // DEEP＝夢の深さ（2＝連勝中で ぐっすり・1＝負けたあとで ねがえり）
 const wxA=()=>(!SIM&&WX.on)?WX.w:'hare';
-function fricNow(){const f=STG[stage].fric;return wxA()==='ame'?Math.min(0.995,f+0.012):f;}   // 雨＝すべる（宇宙は 1 を こえないように）
+function fricNow(){const f=STG[stage].fric;return wxA()==='ame'&&f<0.97?f+0.012:f;}   // 雨＝すべる。土・砂漠だけ（雪・海・宇宙は もともと つるつるで、雨まで足すと突進が 0.26倍まで遅くなった → 見た目だけ・Fable 2026-11-10）
 let DAILY={};try{DAILY=JSON.parse(localStorage.getItem('anzumou_daily')||'{}');}catch(e){}
 let MODE='free',EP=null,FSTG=null,MLV=null;   // free＝ふつうの たいせん／story＝ものがたり／daily＝きょうの取組
 const OMAKASE={name:'おまかせ',icon:'🎲',desc:'毎番ちがう土俵（同じ土俵は続かない）'};
@@ -378,6 +378,12 @@ const WIN=3,ROUND_T=30,HOLD=24;   // 長押し＝0.4秒（60fps で24コマ）
 let P,ringR,state='menu',cpu=false,score=[0,0],roundT=0,shake=0,parts=[],banner=null,last=performance.now(),freeze=0,flakes=[];
 let INTRO=0,lastUt=-1,KORA=[1,1],UT=null,utRound=-1,UT_V=0.012,UT_A0=1.0,UT_A1=0.6,UT_CD=60,TUT=0,tutT=0,CL=null,SIM=false,WATCH=false,PRACTICE=false,pushes=0,pushed=0,waves=[];
 let PITA_A=0.10,PITA_MUL=1.15,SP_WARN=20;const SHARE_URL='https:'+'/'+'/anzu-no-yoru.github.io/anzumou/';   // ピタッ（真芯）の幅と強さ・コンピューターの必殺技の予告「！」の長さ（simulate で試せるよう let）（2026-11-09 Fable のレビューで）
+// つるつるの土俵のバランス（2026-11-10 だいさん「直して」）：どの土俵でも、1回の突進で すべる距離を 土と同じにする（つるつる＝ゆっくり長く すべる・砂＝速く短く止まる）。
+// 前は 雪・海・宇宙で 1回当たると 土の2〜4倍すべって そのまま外へ出て、先に当てた方（必殺技）が勝つだけだった（コンピューター同士で 0〜100％）。
+let SLIP_D=1,SLIP_DIL=1,SLIP_SAFE=1.0,BIG_M=1.4,BIG_T=300,CURVE_A=0.03;   // すべる距離（土＝1）・曲がり／にだんとびの のばし・コンピューターの「当たる線なら行く」の幅・こづちの重さと長さ・たぬきの曲がり（simulate で試せる）
+function slipR(){const sp=STG[stage].speed||1,f=fricNow();return SLIP_D*(0.955/0.045)/(sp*f/(1-f));}   // 土の すべる距離 ÷ この土俵の すべる距離
+function stSpd(){return (STG[stage].speed||1)*slipR();}   // 突進・わん！の速さ
+function dil(){return SLIP_DIL?Math.min(1,slipR()):1;}   // ゆっくりの土俵では、たぬきの曲がり・にだんとびの2回目を 同じ距離で起きるように のばす
 const mkST=()=>({self:[0,0],psh:[0,0],sp:[0,0],pun:[0,0],taps:[0,0],clW:[0,0],clL:[0,0]});   // あんずのひとこと用：自分から出た・押されて出た・必殺技・相手の休み中に押した・押した・連打合戦の勝ち負け
 let RPB=[],lastRP=null,RPM=null,RPT=0,rpAcc=0,utMe=0;   // 🎞 リプレイ：直近180コマ・試合が決まった点の分・その描き方（2026-11-10）／utMe＝うっちゃりで取った点
 let pita=[0,0],ST=mkST(),AGAIN=false,INTRO0=150,lastW=0;   // WATCH＝コンピューター同士の対戦を見る   // コンピューター同士の試し（描かない）
@@ -534,7 +540,7 @@ function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R
 let NOFWD=0;{const play0=SND.play;SND.play=(k,a)=>{play0(k,a);if(NET&&NET.role==='host'&&MODE==='net'&&!NOFWD)netSend({t:'s',k:({win:'lose',lose:'win',pita:'pita2',pita2:'pita'})[k]||k,a});};}   // 1点の勝ち負けの音は 子から見て逆に。試合の終わりの曲は それぞれ
 // ===== 突進・必殺技 =====
 function dash(p,mul=1){
-  const dv=R0*p.c.pow*mul/Math.sqrt(p.c.mass)*(STG[stage].speed||1);p.vx+=Math.cos(p.ang)*dv;p.vy+=Math.sin(p.ang)*dv;p.sq=1;if(p.c.curve)p.curve=30;SND.play('dash');
+  const dv=R0*p.c.pow*mul/Math.sqrt(p.c.mass)*stSpd();p.vx+=Math.cos(p.ang)*dv;p.vy+=Math.sin(p.ang)*dv;p.sq=1;if(p.c.curve)p.curve=30/dil();SND.play('dash');
   if(!SIM)for(let k=0;k<6;k++)parts.push({x:p.x-Math.cos(p.ang)*p.r,y:p.y-Math.sin(p.ang)*p.r,vx:-Math.cos(p.ang+(Math.random()-.5))*3,vy:-Math.sin(p.ang+(Math.random()-.5))*3,life:20,c:stage==='yuki'?'#ffffff':'rgba(255,255,255,.8)',s:4});
 }
 function tap(i){if(state!=='play')return;const p=P[i];if(p.cd>0||p.out||p.fun>0)return;if(i===0&&TUT===1){TUT=2;tutT=0;}
@@ -546,11 +552,11 @@ function special(i){
   if(state!=='play')return;const p=P[i];if(p.out||p.spUsed||p.spLock>0)return;p.spUsed=true;ST.sp[i]++;if(i===0&&TUT===2)tutEnd();if(p.sp2>0){p.sp2--;p.spMoon=90;}   // 満月：1.5秒あとで もう1回使える   // 始まってすぐの必殺技はなし（向かい合ったまま突っ込むと相手が何もできない）
   const k=p.c.key;
   if(k==='anzu'){const op=P[1-i],dx=op.x-p.x,dy=op.y-p.y,d=Math.hypot(dx,dy),RANGE=R0*0.55;   // わん！：近いほど強くはじく
-    if(d<RANGE&&d>0&&!op.out){const f=R0*0.075*(1-d/RANGE*0.6)/Math.sqrt(op.c.mass)*(STG[stage].speed||1);op.vx+=dx/d*f;op.vy+=dy/d*f;op.face=24;op.sq=1;op.hitT=45;}
+    if(d<RANGE&&d>0&&!op.out){const f=R0*0.075*(1-d/RANGE*0.6)/Math.sqrt(op.c.mass)*stSpd();op.vx+=dx/d*f;op.vy+=dy/d*f;op.face=24;op.sq=1;op.hitT=45;}
     p.sq=1;shake=Math.max(shake,6);SND.play('wan');if(!SIM)waves.push({x:p.x,y:p.y,r:p.r,max:RANGE,life:24});}
-  if(k==='usagi'){SND.play('jump');p.twiceAng=p.ang;dash(p,p.c.spMul||1.05);p.twice=12;p.cd=p.c.cd;}
+  if(k==='usagi'){SND.play('jump');p.twiceAng=p.ang;dash(p,p.c.spMul||1.05);p.twice=12/dil();p.cd=p.c.cd;}
   if(k==='tanuki'){SND.play('pon');p.fun=60;p.vx*=0.3;p.vy*=0.3;shake=Math.max(shake,5);}
-  if(k==='issun'){SND.play('kozuchi');p.big=300;dash(p,1.0);}
+  if(k==='issun'){SND.play('kozuchi');p.big=BIG_T;dash(p,1.0);}
   if(k==='oni'){SND.play('kana');dash(p,p.c.spMul||1.6);p.kana=45;p.cd=p.c.cd+10;shake=Math.max(shake,8);}
   if(!SIM)banner={t:p.c.icon+' '+p.c.sp+(p.c.sp.endsWith('！')?'':'！'),life:50,col:p.team};
 }
@@ -662,10 +668,12 @@ function angDiff(a,b){let d=(a-b)%(Math.PI*2);if(d<0)d+=Math.PI*2;return d>Math.
 // コンピューターの必殺技は すぐ出さず、頭の上に「！」を出してから（2026-11-09 Fable のレビューで）
 function spGo(i){const me=P[i];if(me.spWarn>0||me.spLock>0||me.spUsed||state!=='play')return;if(SP_WARN<=0){special(i);return;}me.spWarn=SP_WARN;}
 // この向きで突進したら、あいてに当たらずに 土俵の外まで すべって行くか（止まるところを ざっと先読み）
-function selfOut(p,op){const f=fricNow(),dv=R0*p.c.pow/Math.sqrt(p.c.mass)*(STG[stage].speed||1),
+function selfOut(p,op,mul=1){const f=fricNow(),dv=R0*p.c.pow*mul/Math.sqrt(p.c.mass)*stSpd(),
   vx=p.vx+Math.cos(p.ang)*dv,vy=p.vy+Math.sin(p.ang)*dv,L=Math.hypot(vx,vy)*f/(1-f),ex=p.x+vx/Math.hypot(vx,vy)*L,ey=p.y+vy/Math.hypot(vx,vy)*L;
   if(Math.hypot(ex-cx,ey-cy)<ringR*0.92)return false;
-  const dOp=Math.hypot(op.x-p.x,op.y-p.y);const slip=f>0.97;return !(angDiff(Math.atan2(vy,vx),Math.atan2(op.y-p.y,op.x-p.x))<(slip?0.12:0.22)&&dOp<(slip?R0*0.7:L+op.r));}   // つるつるの土俵（雪・海・宇宙）は 外れると止まらないので、ほぼ真っすぐ近いときだけ   // あいてに当たる向きなら 行く
+  if(Math.hypot(p.x+p.vx*f/(1-f)-cx,p.y+p.vy*f/(1-f)-cy)>ringR*0.92&&(vx*(cx-p.x)+vy*(cy-p.y))>0)return false;   // 待っても すべって出るなら、真ん中へ向かう突進は行く（2026-11-10）
+  if(f>0.97){const ux=vx/Math.hypot(vx,vy),uy=vy/Math.hypot(vx,vy),ox=op.x-p.x,oy=op.y-p.y,al=ox*ux+oy*uy,pr=Math.abs(ox*uy-oy*ux);return !(al>0&&al<L&&pr<(p.r+op.r)*SLIP_SAFE);}   // つるつる：あいてに当たる線なら行く（前は「向きのずれ0.12rad以下・あいてが近い」だけで、はじめの間合いでは ほとんど押せなかった）
+  const dOp=Math.hypot(op.x-p.x,op.y-p.y);return !(angDiff(Math.atan2(vy,vx),Math.atan2(op.y-p.y,op.x-p.x))<0.22&&dOp<L+op.r);}   // あいてに当たる向きなら 行く
 function cpuThink(i,dt){
   const me=P[i],op=P[1-i];if(me.out||me.spWarn>0)return;if(TUT===1&&!SIM)return;   // お手本の①の間は、あいては待つ
   const toOp=Math.atan2(op.y-me.y,op.x-me.x),toCenter=Math.atan2(cy-me.y,cx-me.x);
@@ -721,7 +729,7 @@ function step(dt){
       if(p.twice>0){p.twice-=dt;if(p.twice<=0){const a=p.ang;p.ang=p.twiceAng;dash(p,p.c.spMul||1.05);p.ang=a;}}
       if(p.fun>0){p.fun-=dt;p.vx*=Math.pow(0.6,dt);p.vy*=Math.pow(0.6,dt);}
       if(p.kana>0)p.kana-=dt;
-      if(p.curve>0){p.curve-=dt;const a=0.03*dt*Math.sign(p.spin),c=Math.cos(a),sn=Math.sin(a),vx=p.vx;p.vx=vx*c-p.vy*sn;p.vy=vx*sn+p.vy*c;}   // たぬき：突進が曲がる
+      if(p.curve>0){p.curve-=dt;const a=CURVE_A*dil()*dt*Math.sign(p.spin),c=Math.cos(a),sn=Math.sin(a),vx=p.vx;p.vx=vx*c-p.vy*sn;p.vy=vx*sn+p.vy*c;}   // たぬき：突進が曲がる
       if(p.big>0)p.big-=dt;p.r+=(p.r0*(p.big>0?1.55:1)-p.r)*Math.min(1,0.15*dt);   // いっすんぼうし：こづちで大きく
       p.x+=p.vx*dt;p.y+=p.vy*dt;const f=Math.pow(fr,dt);p.vx*=f;p.vy*=f;
       const sh=STG[stage].shell;if(sh){const d=Math.hypot(p.x-cx,p.y-cy);if(d>ringR*0.8&&d<ringR*0.97){const k=Math.pow(sh,dt);p.vx*=k;p.vy*=k;}}   // 海：貝がらの帯
@@ -731,7 +739,7 @@ function step(dt){
     // ぶつかり：重さで弾み方が変わる。ふんばり中はとても重い。かなぼう中は相手を強く飛ばす
     const a=P[0],b=P[1],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),min=a.r+b.r;
     if(d<min&&d>0){const nx=dx/d,ny=dy/d,ov=min-d;
-      const ma=a.c.mass*(a.fun>0?8:1)*(a.big>0?1.8:1),mb=b.c.mass*(b.fun>0?8:1)*(b.big>0?1.8:1);
+      const ma=a.c.mass*(a.fun>0?8:1)*(a.big>0?BIG_M:1),mb=b.c.mass*(b.fun>0?8:1)*(b.big>0?BIG_M:1);   // こづちの重さ ×1.8→×1.4（2026-11-10）
       a.x-=nx*ov*mb/(ma+mb);a.y-=ny*ov*mb/(ma+mb);b.x+=nx*ov*ma/(ma+mb);b.y+=ny*ov*ma/(ma+mb);
       const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
       if(rv<0){const e=(a.fun>0||b.fun>0)?0.35:1.25;   // ふんばり相手には はね返りが弱い（壁に当たって自分が飛ばないように）
