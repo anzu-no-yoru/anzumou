@@ -117,6 +117,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <h2 style="margin:0 0 4px">📜 ものがたり</h2>
     <p>あんずが夢で むかしばなしの中へ。インスタ <b>@anzu_no_yoru</b> にリールが出た日に、その話の土俵が ひらきます</p>
     <div id="storyList" style="display:flex;flex-direction:column;gap:6px;margin:8px 0"></div>
+    <details id="srcBox" style="margin:4px 0 10px;text-align:left"><summary style="cursor:pointer">📚 おはなしのもと（読んでみたい人へ）</summary><p style="margin:6px 0 4px;font-size:13px">夢の中の話は 30秒用に みじかくしたものです。もとの話は 青空文庫（無料）で読めます</p><div id="srcList" style="display:flex;flex-direction:column;gap:4px;font-size:13px"></div></details>
     <button id="bStoryClose" class="go">とじる</button>
   </div>
 </div>
@@ -277,6 +278,16 @@ const STORY=[
   {k:'kaguya',d:'2026-11-20',t:'かぐやひめ',base:'usagi',shape:'usagi',name:'月の うさぎ',icon:'🌕',col:'#fff3c4',prop:'🎋',stg:'uchu',lv:'tsuyoi',line:'かぐやひめの むかえに来た、月の うさぎと'},
   {k:'yukionna',d:'2026-11-21',t:'ゆきおんな',base:'usagi',shape:'plain',name:'ゆきおんな',icon:'❄️',col:'#e3eeff',prop:'❄️',stg:'yuki',lv:'tsuyoi',line:'ふぶきの夜の ゆきおんなと'},
 ];
+// おはなしのもと（2026-11-10 だいさん「出所のリンクを貼って」）。青空文庫の図書カード。無いものは 書き手のいない昔話
+const AOZ='https:\/\/www.aozora.gr.jp/cards/';
+const SRC={sarukani:['楠山正雄「猿かに合戦」','000329/card18334'],suzume:['楠山正雄「舌切りすずめ」','000329/card18378'],urashima:['楠山正雄「浦島太郎」','000329/card3390'],
+  kobutori:['楠山正雄「瘤とり」','000329/card43461'],momotaro:['楠山正雄「桃太郎」','000329/card18376'],kachikachi:['楠山正雄「かちかち山」','000329/card18377'],
+  hanasaka:['楠山正雄「花咲かじじい」','000329/card3391'],issun:['楠山正雄「一寸法師」','000329/card43457'],warashibe:['楠山正雄「一本のわら」','000329/card43458'],
+  bunbuku:['楠山正雄「文福茶がま」','000329/card18336'],kaguya:['竹取物語（平安時代）・和田万吉の再話','001072/card48310'],yukionna:['小泉八雲『怪談』「雪女」・田部隆次訳','000258/card50326'],
+  kasajizo:['日本の昔話（語りつがれてきた話）'],tsuru:['日本の昔話（語りつがれてきた話）'],omusubi:['日本の昔話（「ねずみの浄土」とも）']};
+function showSrc(){const el=document.getElementById('srcList');el.innerHTML='';
+  for(const e of STORY){const r=SRC[e.k];if(!r)continue;const d=document.createElement('div');
+    d.innerHTML='<b>'+e.t+'</b>：'+(r[1]?'<a href="'+AOZ+r[1]+'.html" target="_blank" rel="noopener" style="color:inherit">'+r[0]+'</a>':r[0]);el.appendChild(d);}}
 const ALL=/[?&]all/.test(location.search);
 function ymd(d){return d.toISOString().slice(0,10);}
 function jst(){return ymd(new Date(Date.now()+9*3600e3));}
@@ -939,7 +950,7 @@ function showStory(){const el=document.getElementById('storyList');el.innerHTML=
     b.innerHTML=`<span style="font-size:26px">${o?e.icon:'🔒'}</span><span style="flex:1"><b>${e.t}</b><br><small>${o?'あいて '+e.name+'・'+STG[e.stg].icon+STG[e.stg].name+'・'+LVS[e.lv].name:md+' のリールで ひらく'}</small></span><span style="font-size:12px;text-align:center">${CLEAR[e.k]?'✅<br>なかま':''}</span>`;
     b.disabled=!o;if(!o)b.style.opacity='.5';
     b.onclick=()=>{MODE='story';EP=e;FSTG=e.stg;MLV=e.lv;document.getElementById('storyP').hidden=true;newMatch(true);};el.appendChild(b);}}
-document.getElementById('bStory').onclick=()=>{showStory();document.getElementById('title').hidden=true;document.getElementById('storyP').hidden=false;};
+document.getElementById('bStory').onclick=()=>{showStory();showSrc();document.getElementById('title').hidden=true;document.getElementById('storyP').hidden=false;};
 document.getElementById('bStoryClose').onclick=()=>{document.getElementById('storyP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bDaily').onclick=()=>{const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
 function homeInfo(){const d=dailyCfg(),td=ymd(new Date()),bd=document.getElementById('bDaily');
