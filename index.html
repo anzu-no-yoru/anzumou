@@ -175,6 +175,14 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
       <tr><td>🦝 たぬき</td><td>突進が くねっと曲がる（矢印の回る向きへ）。まっすぐ来ないので読まれにくい。<br>必殺技「ちゃがま」…茶がまに化けて、1秒ずっしり動かない。ぶつかられても飛ばない</td></tr>
       <tr><td>🥣 いっすんぼうし</td><td>小さくて軽い。すばやいけど押されやすい。<br>必殺技「うちでのこづち」…5秒だけ大きく重くなって突進する</td></tr>
     </table>
+    <h3>左右の技（えらぶ画面で 必殺技ボタンの 左・右に 置ける・1番に2回）</h3>
+    <table>
+      <tr><td>🦶 ふんばる</td><td>その場で ピタッと止まる。土俵ぎわで すべって出そうなときに</td></tr>
+      <tr><td>↺ 逆向き</td><td>矢印の回る向きを 反対にする。早く ねらえる</td></tr>
+      <tr><td>👀 よける</td><td>横へ 小さくステップ。あいての「！」や 突進を かわす</td></tr>
+      <tr><td>🫲 はたき</td><td>向かってくる あいてを 横へ いなす（あいては 押された扱いで 横へ すべる）。来ていないときに押すと「すかっ」と空振りして 少し休み</td></tr>
+      <tr><td>💪 ため</td><td>押してから2秒の間、つぎの突進が1回だけ強くなる（ピタッと重なる）。必殺技には効かない</td></tr>
+    </table>
     <h3>土俵</h3>
     <table>
       <tr><td>🟫 土の土俵</td><td>ふつう</td></tr>
@@ -378,7 +386,7 @@ let PK=['anzu','oni'];   // この試合のキャラ
 function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i===1)?{...CH[EP.base],shape:EP.shape,name:EP.name,icon:EP.icon,col:EP.col,prop:EP.prop}:CH[PK[i]],a=i?0:Math.PI;
   return{i,c,k:(MODE==='story'&&EP&&i===1)?EP.shape:undefined,x:cx+Math.cos(a)*R0*0.45,y:cy,vx:0,vy:0,r:Math.max(24,R0*0.13)*c.r,ang:Math.random()*Math.PI*2,spLock:120,spin:(i?-1:1)*c.spin,
     cd:0,sq:0,out:false,face:0,team:i?css('--p2')||'#4d9de0':css('--p1')||'#ff6b6b',
-    held:-1,stam:1,r0:Math.max(24,R0*0.13)*c.r,big:0,curve:0,clCool:0,spUsed:false,fun:0,twice:0,kana:0,cpuWait:Math.random()*40,cpuHold:0,spWarn:0,pitaT:0,sks:skOf(i),skN:{stop:SK_N,rev:SK_N,dodge:SK_N},skT:0,skE:'',stopT:0,sp2:(!SIM&&WX.on&&WX.moon)?1:0,spMoon:0};}
+    held:-1,stam:1,r0:Math.max(24,R0*0.13)*c.r,big:0,curve:0,clCool:0,spUsed:false,fun:0,twice:0,kana:0,cpuWait:Math.random()*40,cpuHold:0,spWarn:0,pitaT:0,sks:skOf(i),skN:{stop:SK_N,rev:SK_N,dodge:SK_N,hataki:SK_N,tame:SK_N},skT:0,skE:'',stopT:0,tame:0,sp2:(!SIM&&WX.on&&WX.moon)?1:0,spMoon:0};}
 function newRound(){waves=[];CL=null;UT=null;utRound=-1;if(stageSel==='omakase'&&!SIM){const ks=Object.keys(STG).filter(k=>k!==stage);stage=ks[Math.floor(Math.random()*ks.length)];}else if(stageSel!=='omakase')stage=stageSel;if(FSTG)stage=FSTG;
   P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={t:(WX.on?(WX.moon?'🌕':'')+WXS[WX.w].icon+' ':'')+STG[stage].icon+' '+STG[stage].name+'　はっけよい…',life:60};freeze=SIM?1:60;parts=[];}
 function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
@@ -431,6 +439,9 @@ const SND=(()=>{let ac=null,master,sfxG,bgmG,nb,on=true,next=0,stp=0,phrase=null
     out(){const t=now();tone('triangle',760,140,t,0.01,0.55,0.28);},
     pita(){const t=now();tone('sine',1760,null,t,0.002,0.2,0.3);tone('sine',2637,null,t+0.012,0.002,0.14,0.14);},   // ピタッ：高い「ピン」
     pita2(){fx.pita();},   // あいての ピタッ（ふるえない）
+    hataki(){const t=now();noise(t,0.11,0.42,'highpass',1800,1,5200);tone('sine',260,140,t,0.002,0.06,0.14);},   // はたき：短い「シュッ」（2026-11-10）
+    suka(){const t=now();noise(t,0.14,0.14,'bandpass',700,1,300);},   // はたきの空振り：よわい「すかっ」
+    tame(){const t=now();tone('sine',110,72,t,0.01,0.22,0.4);tone('triangle',165,110,t,0.01,0.16,0.12);},   // ため：低い「ぐっ」
     win(){const t=now(),f=[523,587,698,784,1047];f.forEach((x,k)=>pluck(x,t+k*0.09,0.32,0.5,sfxG));taiko(t,0.5,sfxG);},
     lose(){const t=now(),f=[659,587,523,440];f.forEach((x,k)=>pluck(x,t+k*0.14,0.26,0.5,sfxG));},
     fanfare(){const t=now(),f=[523,659,784,1047,784,1047,1319];f.forEach((x,k)=>pluck(x,t+k*0.12,0.34,0.7,sfxG));[0,0.48,0.72].forEach(d=>taiko(t+d,0.6,sfxG));},
@@ -514,11 +525,11 @@ function onNet(m){if(!NET)return;
 function netSnap(){const n=v=>Math.round(v*1e4)/1e4;
   return{t:'snap',st:state,sc:score,stg:stage,rr:n(ringR/R0),in:INTRO,sh:shake,lu:lastUt,kora:KORA,
     bn:banner&&{t:banner.t,life:banner.life,col:banner.col},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
-    p:P.map(p=>[n((p.x-cx)/R0),n((p.y-cy)/R0),n(p.vx/R0),n(p.vy/R0),n(p.ang),n(p.r/R0),n(p.sq),p.out?1:0,p.cd,p.fun,p.kana,p.big,p.face,p.held,p.spUsed?1:0,p.spLock,n(p.stam),p.hitT||0,p.pitaT||0,p.spWarn||0,p.skN?[p.skN.stop,p.skN.rev,p.skN.dodge]:0,Math.round(p.skT||0),p.skE||'']),pt:pita};}
+    p:P.map(p=>[n((p.x-cx)/R0),n((p.y-cy)/R0),n(p.vx/R0),n(p.vy/R0),n(p.ang),n(p.r/R0),n(p.sq),p.out?1:0,p.cd,p.fun,p.kana,p.big,p.face,p.held,p.spUsed?1:0,p.spLock,n(p.stam),p.hitT||0,p.pitaT||0,p.spWarn||0,p.skN?[p.skN.stop,p.skN.rev,p.skN.dodge,p.skN.hataki,p.skN.tame]:0,Math.round(p.skT||0),p.skE||'',p.tame>0?1:0]),pt:pita};}   // 23番め＝ため中（輪を子にも見せる）
 const FLIP={'あなた':'あいて','あいて':'あなた','おされた…':'おしだした！','おしだした！':'おされた…'};   // 親から見た言葉を 子から見た言葉に
 function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:String(m.bn.t).replace(/あなた|あいて|おされた…|おしだした！/g,w=>FLIP[w])};CL=m.cl;
   m.p.forEach((a,i)=>{const p=P[i];if(!p)return;[p.x,p.y,p.vx,p.vy,p.ang,p.r,p.sq]=[cx+a[0]*R0,cy+a[1]*R0,a[2]*R0,a[3]*R0,a[4],a[5]*R0,a[6]];
-    p.out=!!a[7];p.cd=a[8];p.fun=a[9];p.kana=a[10];p.big=a[11];p.face=a[12];p.held=a[13];p.spUsed=!!a[14];p.spLock=a[15];p.stam=a[16];p.hitT=a[17];p.pitaT=a[18]||0;p.spWarn=a[19]||0;if(a[20])p.skN={stop:a[20][0],rev:a[20][1],dodge:a[20][2]};p.skT=a[21]||0;p.skE=a[22]||'';});if(m.pt)pita=m.pt;}
+    p.out=!!a[7];p.cd=a[8];p.fun=a[9];p.kana=a[10];p.big=a[11];p.face=a[12];p.held=a[13];p.spUsed=!!a[14];p.spLock=a[15];p.stam=a[16];p.hitT=a[17];p.pitaT=a[18]||0;p.spWarn=a[19]||0;if(a[20])p.skN={stop:a[20][0],rev:a[20][1],dodge:a[20][2],hataki:a[20][3]||0,tame:a[20][4]||0};p.skT=a[21]||0;p.skE=a[22]||'';p.tame=a[23]?1:0;});if(m.pt)pita=m.pt;}
 // 親の音は 子にも送る（勝ち負けの曲は それぞれが鳴らす）
 let NOFWD=0;{const play0=SND.play;SND.play=(k,a)=>{play0(k,a);if(NET&&NET.role==='host'&&MODE==='net'&&!NOFWD)netSend({t:'s',k:({win:'lose',lose:'win',pita:'pita2',pita2:'pita'})[k]||k,a});};}   // 1点の勝ち負けの音は 子から見て逆に。試合の終わりの曲は それぞれ
 // ===== 突進・必殺技 =====
@@ -529,7 +540,8 @@ function dash(p,mul=1){
 function tap(i){if(state!=='play')return;const p=P[i];if(p.cd>0||p.out||p.fun>0)return;if(i===0&&TUT===1){TUT=2;tutT=0;}
   const op=P[1-i],pt=!op.out&&angDiff(p.ang,Math.atan2(op.y-p.y,op.x-p.x))<=PITA_A;   // 「ピタッ！」真芯（2026-11-09 Fable のレビューで）：矢印が あいての ど真ん中なら 突進が少し強い。コンピューターも同じ
   ST.taps[i]++;if(op.cd>0)ST.pun[i]++;
-  dash(p,pt?PITA_MUL:1);p.cd=p.c.cd;if(pt){pita[i]++;if(!SIM){p.pitaT=30;SND.play(i===myI()?'pita':'pita2');}}}
+  const tm=p.tame>0?TAME_MUL:1;p.tame=0;   // ため：ふつうの突進1回だけ強い（ピタッとは掛け算）。必殺技・にだんとびの2回目は tap を通らないので効かない
+  dash(p,(pt?PITA_MUL:1)*tm);p.cd=p.c.cd;if(pt){pita[i]++;if(!SIM){p.pitaT=30;SND.play(i===myI()?'pita':'pita2');}}}
 function special(i){
   if(state!=='play')return;const p=P[i];if(p.out||p.spUsed||p.spLock>0)return;p.spUsed=true;ST.sp[i]++;if(i===0&&TUT===2)tutEnd();if(p.sp2>0){p.sp2--;p.spMoon=90;}   // 満月：1.5秒あとで もう1回使える   // 始まってすぐの必殺技はなし（向かい合ったまま突っ込むと相手が何もできない）
   const k=p.c.key;
@@ -576,7 +588,10 @@ function utStep(dt){UT.t+=dt;const d=P[UT.d],a=P[UT.a],k=Math.min(1,UT.t/18),an=
 // ===== 左右の技（2026-11-09 だいさん「ふんばる・逆向き・よける を左右に、置くのはやる人の任意で」）=====
 const SKS={stop:{icon:'🦶',name:'ふんばる',desc:'その場で ピタッと止まる。土俵ぎわで すべって出そうなときに'},
   rev:{icon:'↺',name:'逆向き',desc:'矢印の回る向きを 反対にする。早く ねらえる'},
-  dodge:{icon:'👀',name:'よける',desc:'横へ 小さくステップ。あいての「！」や 突進を かわす'}};
+  dodge:{icon:'👀',name:'よける',desc:'横へ 小さくステップ。あいての「！」や 突進を かわす'},
+  hataki:{icon:'🫲',name:'はたき',desc:'向かってくる あいてを 横へ いなす。来ていないと 空振り（すかっ）'},   // 2026-11-10 だいさん「技を足して」
+  tame:{icon:'💪',name:'ため',desc:'2秒の間に 押した突進が 1回だけ強くなる（必殺技には効かない）'}};
+let HATAKI_A=70*Math.PI/180,HATAKI_MUL=1.15,TAME_T=120,TAME_MUL=1.25;   // はたきで 回す角度と速さ／ための長さ（コマ）と強さ（simulate で試せる）。ためは 1.35 だと 組み合わせの勝率が 平均22ずれて強すぎたので 1.25（平均15・前からの技 ふんばる＋よける と同じくらい）
 const SK_N=2;   // 1番に2回まで
 let SKSEL=['none','none'];try{const v=(localStorage.getItem('anzumou_sk')||'').split(',');if(v.length===2&&v.every(k=>k==='none'||SKS[k]))SKSEL=v;}catch(e){}
 let NSK=null,SIMSK=null;   // ネットのときの 2人の技／simulate の技
@@ -588,7 +603,17 @@ function useSkill(i,k){if(state!=='play'||!P||CL||UT||INTRO>0)return false;const
   else if(k==='dodge'){const op=P[1-i],a=Math.atan2(op.y-p.y,op.x-p.x),dv=R0*0.032/Math.sqrt(p.c.mass)*(STG[stage].speed||1);
     let best=null;for(const sg of[1,-1]){const b=a+sg*Math.PI/2,ex=p.x+Math.cos(b)*R0*0.3,ey=p.y+Math.sin(b)*R0*0.3,d=Math.hypot(ex-cx,ey-cy);if(!best||d<best.d)best={b,d};}
     p.vx+=Math.cos(best.b)*dv;p.vy+=Math.sin(best.b)*dv;p.sq=0.6;if(!SIM)SND.play('jump');}
+  else if(k==='hataki'){const op=P[1-i];   // はたき：向かってくる あいてを 横へ いなす（2026-11-10 だいさん「技を足して」）
+    if(hatakiOk(p,op)){const sx=me2op(op,p),th=-sx*HATAKI_A,c=Math.cos(th),s=Math.sin(th),vx=op.vx,vy=op.vy,ov=Math.hypot(vx,vy)||1;   // 自分がいない側（通り過ぎる側）へ 回す
+      op.vx=(vx*c-vy*s)*HATAKI_MUL;op.vy=(vx*s+vy*c)*HATAKI_MUL;op.face=20;op.hitT=45;op.sq=0.8;   // 押された扱い（雪だまりが効かない・リーチなら「こらえろ！」も起きうる）
+      p.vx+=-vy/ov*sx*R0*0.004;p.vy+=vx/ov*sx*R0*0.004;p.sq=0.6;p.skE='🫲 はたき！';if(!SIM){SND.play('hataki');shake=Math.max(shake,5);}if(i===myI())SND.buzz(60);return true;}   // 自分は 反対側へ 小さく
+    p.cd=Math.max(p.cd,20);p.vx+=Math.cos(p.ang)*R0*0.003;p.vy+=Math.sin(p.ang)*R0*0.003;p.skE='すかっ';if(!SIM)SND.play('suka');}   // 空振り：少し前へ よろけて休み
+  else if(k==='tame'){p.tame=TAME_T;p.skE='💪 ため';if(!SIM)SND.play('tame');}   // ため：2秒の間の ふつうの突進1回だけ ×TAME_MUL（1.25）
   if(i===myI())SND.buzz(30);return true;}
+// はたきが 決まるか：あいてが 速く、自分の方へ（0.6rad 以内）、近く（R0×0.6）
+function hatakiOk(p,op){if(op.out)return false;const sp=Math.hypot(op.vx,op.vy);return sp>R0*0.02&&Math.hypot(op.x-p.x,op.y-p.y)<R0*0.6&&angDiff(Math.atan2(op.vy,op.vx),Math.atan2(p.y-op.y,p.x-op.x))<0.6;}
+// あいて（op）の進む向きから見て、自分（p）が 左（+1）か 右（-1）か
+function me2op(op,p){return (op.vx*(p.y-op.y)-op.vy*(p.x-op.x))>=0?1:-1;}
 // 必殺技ボタンの 左右に 技のボタン（えらんだものだけ）
 function skBtns(){const b=spBtn();if(!b)return[];const p=P[myI()];if(!p||!p.sks)return[];const r=b.r*0.72,out=[],corner=b.x!==cx;
   const xs=corner?[b.x-b.r*4.0,b.x-b.r*2.15]:[b.x-b.r*2.25,b.x+b.r*2.25];
@@ -662,7 +687,10 @@ function cpuThink(i,dt){
     if(has('stop')&&sp>R0*0.004&&Math.hypot(ex-cx,ey-cy)>ringR*0.95&&dC>ringR*0.55){useSkill(i,'stop');return;}
     const opSp2=Math.hypot(op.vx,op.vy),rush=opSp2>R0*0.02&&angDiff(Math.atan2(op.vy,op.vx),Math.atan2(me.y-op.y,me.x-op.x))<0.45;
     if(has('dodge')&&dOp<R0*0.6&&(op.spWarn>0||(rush&&dC>ringR*0.5))){useSkill(i,'dodge');return;}
-    if(has('rev')){let d=(want-me.ang)%(Math.PI*2);if(d<0)d+=Math.PI*2;const go=me.spin>0?d:Math.PI*2-d;if(go>Math.PI*1.4){useSkill(i,'rev');return;}}}
+    if(has('hataki')&&hatakiOk(me,op)&&dOp<R0*0.55){useSkill(i,'hataki');return;}   // はたき：決まりそうなときだけ（2026-11-10）
+    let d=(want-me.ang)%(Math.PI*2);if(d<0)d+=Math.PI*2;const go=me.spin>0?d:Math.PI*2-d;   // ねらう向きまで 矢印が回る残り
+    if(has('tame')&&!(me.tame>0)&&me.cd<=0&&go>0.5&&go<1.2&&dC<ringR*0.6){useSkill(i,'tame');return;}   // ため：もうすぐ矢印が合うとき・真ん中近く
+    if(has('rev')&&go>Math.PI*1.4){useSkill(i,'rev');return;}}
   if(me.cd>0||me.fun>0)return;
   if(diff(want)<L.tol[0]+Math.random()*L.tol[1]&&me.cpuWait<=0){
     if(selfOut(me,op)&&Math.random()<L.safe){me.cpuWait=6;return;}   // 押したら自分が外へ飛ぶ向きなら待つ（2026-11-09 だいさん「敵の自爆が結構多い」）
@@ -688,6 +716,7 @@ function step(dt){
       if(p.held>=0){p.held+=dt;if(p.held>=HOLD){if(p.spUsed||p.spLock>0)p.held=-3;else{p.held=-2;special(p.i);}}}   // -3＝必殺技はもう使った→離したら突進   // -2＝この押しはもう使った
       if(p.spWarn>0){p.spWarn-=dt;if(p.spWarn<=0){p.spWarn=0;special(p.i);}}   // 「！」のあとで必殺技
       if(p.stopT>0){p.stopT-=dt;p.vx*=Math.pow(0.8,dt);p.vy*=Math.pow(0.8,dt);}   // ふんばる
+      if(p.tame>0)p.tame=Math.max(0,p.tame-dt);   // ため：2秒で 消える
       if(p.spLock>0)p.spLock-=dt;if(!(p.spWarn>0))p.ang+=p.spin*dt;p.cd=Math.max(0,p.cd-dt);p.sq*=Math.pow(0.86,dt);
       if(p.twice>0){p.twice-=dt;if(p.twice<=0){const a=p.ang;p.ang=p.twiceAng;dash(p,p.c.spMul||1.05);p.ang=a;}}
       if(p.fun>0){p.fun-=dt;p.vx*=Math.pow(0.6,dt);p.vy*=Math.pow(0.6,dt);}
@@ -759,7 +788,7 @@ function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==
   $('rpBox').hidden=WATCH||!!(NET&&NET.role==='guest'&&MODE==='net')||!lastRP||lastRP.length<20;   // 子は step を回さないので リプレイが無い
   showTip(w);$('bShare').hidden=MODE==='net'||WATCH;$('bShare').textContent='結果を送る';
   document.getElementById('dreamLine').textContent=MODE==='story'&&EP?`…という、あんずの「${EP.t}」の夢でした 🐩💤`:'…という、あんずの夢でした 🐩💤';
-  if(!WATCH&&MODE!=='net'&&SKSEL.every(k=>k==='none')){try{if(!localStorage.getItem('anzumou_skhint')){localStorage.setItem('anzumou_skhint','1');document.getElementById('recLine').innerHTML+='<br><span style="font-weight:400">💡 えらぶ画面で、必殺技ボタンの 左右に 技（ふんばる・逆向き・よける）を 置けます</span>';}}catch(e){}}   // 1回だけ教える
+  if(!WATCH&&MODE!=='net'&&SKSEL.every(k=>k==='none')){try{if(!localStorage.getItem('anzumou_skhint')){localStorage.setItem('anzumou_skhint','1');document.getElementById('recLine').innerHTML+='<br><span style="font-weight:400">💡 えらぶ画面で、必殺技ボタンの 左右に 技（ふんばる・逆向き・よける・はたき・ため）を 置けます</span>';}}catch(e){}}   // 1回だけ教える
   if(WATCH){document.getElementById('over').hidden=false;return;}
   STP={t0:performance.now(),sent:-1};SB=[null,null];}   // スタンプの時間のあとで 結果の画面
 // あんずのひとこと（2026-11-09 Fable のレビューで）：everest_60days の「隊長のひとこと」と同じ。その試合の数字から 次の一手を1行だけ（一番効くもの1つ）
@@ -876,6 +905,9 @@ function draw(t){
     ctx.lineWidth=3;ctx.beginPath();ctx.arc(w.x,w.y,w.r+(w.max-w.r)*k*0.7,0,7);ctx.stroke();}ctx.globalAlpha=1;
   for(const q of parts){ctx.globalAlpha=Math.max(0,q.life/30);ctx.fillStyle=q.c;ctx.beginPath();ctx.arc(q.x,q.y,q.s,0,7);ctx.fill();}ctx.globalAlpha=1;
   if(P)for(const p of P)drawPoyo(p,t);
+  if(P)for(const p of P){if(p.tame>0&&!p.out&&state==='play'){const bl=0.55+0.45*Math.sin(t/70),n=6;ctx.save();ctx.globalAlpha=bl;ctx.font=`${Math.max(11,p.r*0.32)}px sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";   // ため中：体のまわりに 力こぶの輪（黄色・点滅）
+    ctx.strokeStyle='#ffd23f';ctx.lineWidth=3;ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(p.x,p.y,p.r*1.32,0,7);ctx.stroke();ctx.setLineDash([]);
+    for(let k=0;k<n;k++){const a=k/n*Math.PI*2+t/600;ctx.fillText('💪',p.x+Math.cos(a)*p.r*1.32,p.y+Math.sin(a)*p.r*1.32);}ctx.textBaseline='alphabetic';ctx.restore();}}
   if(P)for(const p of P){if(p.pitaT>0){const k=p.pitaT/30,y=p.y-p.r*1.55-(1-k)*18;ctx.save();ctx.globalAlpha=Math.min(1,k*2);ctx.font=`900 ${Math.max(16,R0*0.075)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd23f';ctx.strokeText('ピタッ！',p.x,y);ctx.fillText('ピタッ！',p.x,y);ctx.restore();}   // 真芯の小さな文字（頭の上）
     if(p.spWarn>0&&!p.out){const s=1+0.25*Math.sin(t/40);ctx.save();ctx.translate(p.x,p.y-p.r*1.6);ctx.scale(s,s);ctx.font=`900 ${Math.max(28,R0*0.13)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#ff3b30';ctx.strokeText('！',0,0);ctx.fillText('！',0,0);ctx.restore();}}   // 必殺技の予告
   if(CL&&P){const d=P[CL.d],a=P[CL.a],bw=Math.min(W*0.8,R0*1.4),bx=cx-bw/2,by=cy+(CL.uy<0?R0*0.5:-R0*0.45),bh=16,m=bx+bw*(CL.v+1)/2;   // 連打のゲージ：左＝こらえる 右＝押し出す
