@@ -47,7 +47,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 .row2{display:flex;gap:6px;justify-content:center}
 .row2 button{flex:1 1 0;margin:4px 0;padding:10px 6px;font-size:14px}
 .ch canvas{display:block;width:100%;height:50px;margin:0 auto}
-.ch span{display:block;font-size:12px;line-height:1.25}
+.ch span{display:block;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
 #pvCv{width:100%;height:120px;display:block;border-radius:12px;background:rgba(128,112,95,.12);margin:4px 0}
 .card{display:block;max-width:100%;max-height:28vh;margin:8px auto 2px;border-radius:12px;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
 .rec{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
@@ -61,6 +61,14 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 #diaryList{text-align:left;font-size:14px;line-height:1.6;max-height:52vh;overflow:auto;margin:6px 0}
 #diaryList div{border-top:1px solid var(--line);padding:4px 2px}
 </style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1b1714">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="あんずもう">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <canvas id="cv"></canvas>
@@ -78,12 +86,21 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <p id="banLine" style="margin:2px 0 2px;font-weight:700"></p>
     <p id="wxLine" class="tag" style="margin:0 0 4px"></p>
     <button id="b1p" class="go big">たいせん</button>
-    <button id="bNet" class="go b2" style="width:100%;margin:4px 0">🌐 ネットたいせん（合言葉で友だちと）</button>
-    <div class="row2"><button id="bStory" class="go b2">📜 ものがたり</button><button id="bDaily" class="go b2">📅 きょうの取組</button></div>
-    <div class="row2"><button id="bpr" class="go b2">れんしゅう</button><button id="bPick" class="ghost">キャラ・土俵をえらぶ</button></div>
+    <div class="row2"><button id="bDaily" class="go b2">📅 きょうの取組</button><button id="bStory" class="go b2">📜 ものがたり</button></div>
+    <button id="bNet" class="go b2" style="width:100%;margin:4px 0">🌐 ネットたいせん（リンクを送って友だちと）</button>
+    <div class="row2"><button id="bPick" class="ghost">🐩 えらぶ</button><button id="bHow" class="ghost">📖 あそびかた</button><button id="bMore" class="ghost">☰ もっと</button></div>
+    <p id="keyHint"><b>ちょん</b>＝突進　<b>下の丸ボタン</b>か<b>長押し</b>＝必殺技（キーボードは <kbd>スペース</kbd>）</p>
+  </div>
+</div>
+<div class="panel" id="moreP" hidden>
+  <div class="box">
+    <h2 style="margin:0 0 4px" id="moreH">☰ もっと</h2>
+    <div class="row2"><button id="bpr" class="go b2">れんしゅう</button><button id="bw" class="go b2">👀 見る</button></div>
     <div class="row2"><button id="bRec" class="ghost">🏅 きろく</button><button id="bDiary" class="ghost">📔 夢日記</button></div>
-    <div class="row2"><button id="bHow" class="ghost">📖 あそびかた</button><button id="bw" class="ghost">👀 見る</button></div>
-    <p><b>ちょん</b>＝突進　<b>下の丸ボタン</b>か<b>長押し</b>＝必殺技（キーボードは <kbd>スペース</kbd>）</p>
+    <button id="bInstall" class="ghost" hidden style="width:100%;margin:5px 0">📲 ホーム画面に置く（アプリのように ひらける）</button>
+    <p id="iosHint" hidden>📲 iPhone は、下の 共有ボタン →「ホーム画面に追加」で、アプリのように 全画面で ひらけます</p>
+    <button id="bLang" class="ghost" style="width:100%;margin:5px 0">🌐 English</button>
+    <div><button id="bMoreClose" class="go">とじる</button></div>
   </div>
 </div>
 <div class="panel" id="pickP" hidden>
@@ -107,14 +124,15 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 <div class="panel" id="netP" hidden>
   <div class="box">
     <h2 style="margin:0 0 4px">🌐 ネットたいせん</h2>
-    <p>はなれた友だちと 合言葉（4けた）で つないで取ります。<br>ひとりが「合言葉をつくる」、もうひとりが その合言葉を入れて「入る」。</p>
+    <p id="netLead">はなれた友だちと つないで取ります。<br>ひとりが「合言葉をつくる」→ 出てきた<b>リンクを送る</b>。友だちは リンクを タップするだけ（合言葉 4けたを 入れても 入れます）。</p>
     <button id="bHost" class="go">合言葉をつくる</button>
+    <button id="bInvite" class="go b2" hidden>🔗 リンクを送る</button>
     <div style="display:flex;gap:6px;justify-content:center;align-items:center;margin:8px 0">
       <input id="netCode" inputmode="numeric" maxlength="4" placeholder="4けた" style="font-size:22px;width:6em;text-align:center;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)">
       <button id="bJoin" class="go b2" style="margin:0">入る</button>
     </div>
     <p id="netMsg" style="min-height:3em;font-weight:700"></p>
-    <p style="font-size:12px;color:var(--sub)">キャラは「キャラ・土俵をえらぶ」で えらんだもの。土俵は 合言葉をつくった人のもの。家や外のネットで遊んでください（会社などのネットでは つながらないことがあります）</p>
+    <p id="netNote" style="font-size:12px;color:var(--sub)">キャラは「えらぶ」で えらんだもの。土俵は 合言葉をつくった人のもの。とちゅうで切れても 25秒までは つなぎ直して 続きから取れます。家や外のネットで遊んでください（会社などのネットでは つながらないことがあります）</p>
     <button id="bNetClose" class="ghost">とじる</button>
   </div>
 </div>
@@ -202,8 +220,11 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <ul>
       <li><b>たいせん</b>…コンピューターと3点先取。コンピューターの<b>つよさ</b>は「えらぶ」画面で 🌱よわい・🍙ふつう・🔥つよい から選べる。あいてのキャラは 🎲おまかせ（毎試合かわる）にもできる。</li>
       <li>試合は、ねむる あんずが見る <b>むかしばなしの土俵の夢</b>。始まりの夢の入口はタップでとばせる。</li>
-      <li><b>れんしゅう</b>…相手は動かない。必殺技は2.5秒でまた使える。土俵は小さくならない。</li>
-      <li><b>見る</b>…コンピューター同士の対戦をながめる。</li>
+      <li><b>🌐 ネットたいせん</b>…「合言葉をつくる」→ 出てきた<b>リンクを送る</b>。友だちは リンクを タップするだけで入れる。とちゅうで切れても 25秒までは つなぎ直して 続きから。</li>
+      <li><b>れんしゅう</b>（「☰ もっと」の中）…相手は動かない。必殺技は2.5秒でまた使える。土俵は小さくならない。</li>
+      <li><b>見る</b>（「☰ もっと」の中）…コンピューター同士の対戦をながめる。</li>
+      <li><b>📲 ホーム画面に置く</b>…「☰ もっと」から。アプリのように 全画面で ひらけて、ネットが無くても遊べる（公開のページだけ）。</li>
+      <li><b>🌐 English／日本語</b>…言葉は スマホの言語で 自動で決まる。「☰ もっと」で 切りかえられる。</li>
       <li><b>📅 週の取組</b>…きょうの取組は 月曜から日曜の7日で1組。ボタンの下の 月✅ 火✖ 水● …が この週の結果（●＝きょう まだ）。<b>7日ぜんぶ勝つと「🌙 七日の夢、おしまい」</b>で、結果の画像が金のふちになる。</li>
     </ul>
     <h3>コツ</h3>
@@ -222,7 +243,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     </ul>
     <h3>きろく・結果の画像</h3>
     <ul>
-      <li>ホームの 🏅 きろく で、通算の勝ち負け・連勝・押し出した回数・土俵ぎわでこらえた回数・キャラごとの成績が見られる（たいせんだけ数える。このスマホの中だけに残る）。</li>
+      <li>「☰ もっと」の 🏅 きろく で、通算の勝ち負け・連勝・押し出した回数・土俵ぎわでこらえた回数・キャラごとの成績が見られる（たいせんだけ数える。このスマホの中だけに残る）。</li>
       <li>試合が終わると、インスタの縦（4:5）の結果の画像が出る。画像を長押しで保存できる。</li>
       <li>はじめて遊ぶときだけ、「ちょん」と「長押し」のお手本が出る。</li>
       <li><b>📔 夢日記</b>…取るたびに1行ずつ たまる（たいせん・ものがたり・きょうの取組）。「夢日記をコピー」で最近の30行を送れる。</li>
@@ -250,6 +271,87 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
   </div>
 </div>
 <script>
+// ===== 言葉：日本語／英語を自動で切りかえる（2026-11-10 だいさん「全部やって」）。?lang=en|ja か「もっと」のボタンで変えられる（localStorage anzumou_lang） =====
+const LANG=(()=>{let v=null;try{v=new URLSearchParams(location.search).get('lang')||localStorage.getItem('anzumou_lang');}catch(e){}if(v!=='ja'&&v!=='en')v=/^ja/i.test(navigator.language||'ja')?'ja':'en';return v;})(),EN=LANG==='en';
+const L=(j,e)=>EN?e:j;document.documentElement.lang=LANG;
+const HOW_EN=EN?`<h2>📖 How to Play</h2>
+<h3>Rules</h3>
+<ul><li><b>Push the opponent out of the ring to score 1 point.</b> First to 3 points wins.</li>
+<li>As time passes, the ring slowly shrinks (red line).</li></ul>
+<h3>Controls (tap anywhere)</h3>
+<ol><li><b>An arrow keeps spinning</b> around your character. You cannot aim it. Its starting direction is random every round.</li>
+<li><b>Tap</b> the instant the arrow points at the opponent. You dash straight that way.</li>
+<li>After a dash you rest for a moment (you cannot tap while the arrow is faint).</li>
+<li><b>Press and hold (0.4 s) for your Special.</b> It fires when the ring around your character completes. Once per round in Battle, usable 2 seconds after “Nokotta!”.</li></ol>
+<h3>Edge stand “Hold on!” and Utchari</h3>
+<ul><li>Only <b>when the opponent is one point from winning</b>: if you are knocked to the edge, you stop there and it becomes <b>“Hold on! Mash!”</b>. <b>Once per match for each player</b> (“🪢 Edge stand” under your name; it glows when ready).</li>
+<li>The pushed side <b>mashes to hold on</b>; the pushing side <b>mashes to push through</b>. If the gauge reaches the left (Hold), or stays near the middle for 2.5 seconds, you held. If it reaches the right, you are pushed out.</li>
+<li>If you hold, you do an <b>“Utchari!”</b>: you swap places and throw the opponent from the edge. It usually turns the round around, though sometimes they stay in.</li>
+<li>In Practice the edge stand happens every time.</li>
+<li>Character differences: Oni's taps are stronger; Rabbit's stamina drains slowly.</li></ul>
+<h3>Characters</h3>
+<table><tr><td>🐩 Anzu</td><td>All-rounder. No weak points.<br>Special “Woof!” … barks and blasts a nearby opponent away</td></tr>
+<tr><td>🐰 Rabbit</td><td>Nimble. Faster arrow, shorter rest, stamina drains slowly.<br>Special “Double Hop” … hops twice in the same direction</td></tr>
+<tr><td>👹 Oni</td><td>Heavy. Slow arrow, but hits hard. Strong taps.<br>Special “Iron Club” … a heavy dash that sends the opponent flying</td></tr>
+<tr><td>🦝 Tanuki</td><td>Its dash curves (the way the arrow spins), so it is hard to read.<br>Special “Tea Kettle” … turns into an iron kettle and will not budge for 1 second</td></tr>
+<tr><td>🥣 Issun-boshi</td><td>Tiny and light. Quick, but easy to push.<br>Special “Lucky Mallet” … grows big and heavy for 5 seconds and dashes</td></tr></table>
+<h3>Side moves (put them left / right of the Special button on the Choose screen · 2 uses per round)</h3>
+<table><tr><td>🦶 Brace</td><td>Stop dead on the spot. For when you are sliding out at the edge</td></tr>
+<tr><td>↺ Reverse</td><td>Flip the arrow's spin direction, so you can aim sooner</td></tr>
+<tr><td>👀 Sidestep</td><td>A small step sideways to dodge a “!” or a dash</td></tr>
+<tr><td>🫲 Slap</td><td>Deflect an opponent charging at you (they slide off sideways). If nobody is coming you whiff and rest briefly</td></tr>
+<tr><td>💪 Charge</td><td>For 2 seconds, your next dash is stronger (stacks with Bullseye). Does not affect Specials</td></tr></table>
+<h3>Rings</h3>
+<table><tr><td>🟫 Clay Ring</td><td>Standard</td></tr>
+<tr><td>❄️ Snowy Night</td><td>Slippery. Snowdrifts at the edge brake you a little</td></tr>
+<tr><td>🏜️ Desert</td><td>Sand stops you fast. Dashes are quick and short</td></tr>
+<tr><td>🌊 Seashore</td><td>Slippery wet sand. A band of shells at the edge slows you in every direction</td></tr>
+<tr><td>🌌 Space</td><td>Floaty and slow. Once you move, you keep drifting</td></tr>
+<tr><td>🎲 Random</td><td>A different ring every round</td></tr></table>
+<h3>🌤 Dream weather (changes daily · same for everyone on Earth)</h3>
+<ul><li>“Tonight's dream weather” is shown on the home screen. It only affects <b>Battle</b> and <b>Today's Bout</b>.</li>
+<li>☀️ Clear … normal. 🌧️ Rain … the ring gets slippery (Clay and Desert). 🌬️ Wind … a slowly turning wind pushes you a little (white streaks show the direction).</li>
+<li>🌕 On <b>real full-moon nights</b> (±1 day) you can use your <b>Special twice per round</b> (★★ under your name).</li></ul>
+<h3>Modes</h3>
+<ul><li><b>Battle</b> … first to 3 against the computer. Pick the <b>level</b> (🌱Easy · 🍙Normal · 🔥Hard) on the Choose screen. The opponent can be 🎲Random.</li>
+<li>Every match is <b>a folktale sumo dream</b> of sleeping Anzu. Tap to skip the dream intro.</li>
+<li><b>📅 Today's Bout</b> … one shared bout per day, the same for everyone. Monday to Sunday is one set (Mo✅ Tu✖ We● …). <b>Win all 7 days for “🌙 Seven Nights of Dreams”</b> and a golden result image.</li>
+<li><b>📜 Stories</b> … Japanese folktales. Beat a tale's character and they join you as a friend.</li>
+<li><b>🌐 Online Battle</b> … create a code, send the link, and your friend joins with one tap.</li>
+<li><b>Practice</b> (under More) … the opponent stands still; Specials recharge in 2.5 s. <b>Watch</b> … computer vs computer.</li></ul>
+<h3>Tips</h3>
+<ul><li>Near the edge, wait for the arrow to point back to the center before tapping.</li>
+<li>Attack right after the opponent dashes (while their arrow is faint).</li>
+<li>“Woof!” works best when the opponent is close and nearer the edge than you.</li>
+<li>Tap the instant the arrow points <b>dead center</b> at the opponent for a <b>“Bullseye!”</b> — a slightly stronger dash (the computer plays by the same rule).</li>
+<li>The computer shows a <b>red “!”</b> above its head before a Special. Dodge, or strike first.</li></ul>
+<h3>Sound & vibration</h3>
+<ul><li>🔊 (top right) toggles sound, 📳 toggles vibration. Music changes with the ring and speeds up as the ring shrinks.</li>
+<li>Vibration works on Android only (iPhone browsers do not vibrate).</li>
+<li>On iPhone, sound may be muted by the silent switch.</li></ul>
+<h3>Records & result image</h3>
+<ul><li>🏅 Records, 📔 Dream Diary and your 🎌 rank are stored only on this device.</li>
+<li>After a match you get a 4:5 result image (press and hold to save), a replay of the winning move, and one tip from 🐩 Anzu. “Share result” sends the result as text.</li>
+<li><b>🏷 Nickname</b> … your play style earns you a nickname such as “Bullseye Master Anzu”.</li></ul>
+<div style="text-align:center"><button id="bHowClose" class="go">Close</button></div>`:'';
+if(EN){document.title='Anzumou — Anzu\'s Dream Sumo';const Q=(q,h)=>{const e=document.querySelector(q);if(e)e.innerHTML=h;},labs=document.querySelectorAll('#pickP .lab');
+  Q('#bBack','← Menu');Q('#title h1','Anzumou <span style="font-size:15px">Night Ring</span>');Q('#title .tag','Sumo in the folktale dreams of Anzu, a sleeping toy poodle');
+  Q('#b1p','Battle');Q('#bNet','🌐 Online Battle (send a link to a friend)');Q('#bPick','🐩 Choose');Q('#bHow','📖 How to Play');Q('#bMore','☰ More');
+  Q('#keyHint','<b>Tap</b> = dash　<b>Round button</b> or <b>hold</b> = Special (keyboard: <kbd>Space</kbd>)');
+  Q('#moreH','☰ More');Q('#bpr','Practice');Q('#bw','👀 Watch');Q('#bRec','🏅 Records');Q('#bDiary','📔 Dream Diary');Q('#bInstall','📲 Add to Home Screen (opens like an app)');
+  Q('#iosHint','📲 On iPhone: Share button → “Add to Home Screen” to open it full-screen like an app');Q('#bMoreClose','Close');
+  if(labs.length>=5){labs[0].innerHTML='🔴 You <small style="font-weight:400">(win in 📜Stories to make new friends)</small>';labs[1].innerHTML='🔵 Opponent';labs[2].innerHTML='Ring';labs[3].innerHTML='Computer level';
+    labs[4].innerHTML='Moves left / right of the Special button <small style="font-weight:400">(2 uses per round · the computer uses the same moves)</small>';}
+  Q('#bPickOk','OK');Q('#netP h2','🌐 Online Battle');Q('#netLead','Play a friend far away.<br>One of you taps “Create a code” → <b>send the link</b>. Your friend just taps the link (typing the 4-digit code also works).');
+  Q('#bHost','Create a code');Q('#bInvite','🔗 Send invite link');Q('#bJoin','Join');document.getElementById('netCode').placeholder='4 digits';
+  Q('#netNote','Your character is the one picked on the Choose screen. The ring is the host\'s. If the line drops, the game waits up to 25 seconds and resumes. Use home or mobile internet (some office networks block it).');Q('#bNetClose','Close');
+  Q('#storyP h2','📜 Stories');Q('#storyP .box>p','Anzu dreams her way into Japanese folktales. Each tale\'s ring opens on the day its reel is posted on Instagram <b>@anzu_no_yoru</b>');
+  Q('#srcBox summary','📚 Where the tales come from');Q('#srcBox p','The dream versions are shortened to 30 seconds. The original tales can be read for free on Aozora Bunko (in Japanese)');Q('#bStoryClose','Close');
+  Q('#recP h2','🏅 Records');Q('#recP .box>p','Your record against the computer. Stored only on this device');Q('#bRecClose','Close');
+  Q('#diaryP h2','📔 Dream Diary');Q('#diaryP .box>p','The bouts Anzu has dreamed (newest first, up to 200). Stored only on this device');Q('#bDiaryCopy','Copy diary');Q('#bDiaryClose','Close');
+  Q('#bRe','One more bout');Q('#bMenu','Menu');Q('#cardHint','Press and hold the image to save it');Q('#aSave','Save image');Q('#bShare','Share result');
+  Q('#howto .box',HOW_EN);}
+
 const cv=document.getElementById('cv');let ctx=cv.getContext('2d');
 let W,H,R0,cx,cy,dpr,SAFEB=0;
 // 画面の下の安全な余白（Android のジェスチャーバー・iPhone のホームバー）。Android の Chrome はアドレスバーが隠れるとページを画面の一番下まで広げ、その分を env(safe-area-inset-bottom) で教えてくる（viewport-fit=cover が要る）。値はあとから変わるので、描くたびに読み直す（2026-11-09 だいさん「何回か遊ぶと下が切れる」）
@@ -273,7 +375,7 @@ const CH={
         sp:'わん！',spDesc:'ほえて、近くの相手をはじき返す（突進しなくても押し返せる）',desc:'ふつう。にがてが無い'},
   usagi:{name:'うさぎ',icon:'🐰',col:'#f4f1ea',mass:1.08,spin:0.062,pow:0.059,cd:24,r:0.95,spMul:1.25,grip:0.85,stamMul:1.6,mash:0.13,
         sp:'にだんとび',spDesc:'同じ向きへ2回つづけて跳ぶ',desc:'すばしこい。矢印が速く回り、休みが短い'},
-  oni:{name:'おに',icon:'👹',col:'#d9534f',mass:1.05,spin:0.047,pow:0.039,cd:42,r:1.1,spMul:1.4,knock:1.5,grip:1.15,stamMul:0.85,mash:0.1,   // 2026-11-08 強すぎたので弱めた（だいさん「鬼は相手にすると強いね」）
+  oni:{name:'おに',icon:'👹',col:'#d9534f',mass:1.05,spin:0.047,pow:0.042,cd:42,r:1.1,spMul:1.4,knock:1.5,grip:1.15,stamMul:0.85,mash:0.1,   // 2026-11-08 強すぎたので弱めた（だいさん「鬼は相手にすると強いね」）
        
         sp:'かなぼう',spDesc:'強い突進。当てた相手を遠くへ飛ばす',desc:'重い。矢印がゆっくり。当たると重い'},
   // 2026-11-08 だいさん「キャラを二人追加して」→ 昔話から たぬき（ぶんぶく茶がま）と いっすんぼうし
@@ -293,6 +395,16 @@ const STG={
 const LVS={yowai:{name:'よわい',icon:'🌱',desc:'ゆっくり考える。ねらいが甘い。はじめての人に',wait:26,rnd:40,tol:[0.45,0.45],sp:0.04,mash:0.7,safe:0.7,skUse:0.3},
   futsuu:{name:'ふつう',icon:'🍙',desc:'ちょうどいい あいて',wait:0,rnd:30,tol:[0.2,0.3],sp:1,mash:1,safe:0.97,skUse:0.6},
   tsuyoi:{name:'つよい',icon:'🔥',desc:'すばやく、よくねらう。連打も速い',wait:-4,rnd:14,tol:[0.12,0.12],sp:1,mash:1.2,safe:0.97,skUse:0.9}};
+if(EN){const set=(o,t)=>{for(const k in t)Object.assign(o[k],t[k]);};
+  set(CH,{anzu:{name:'Anzu',sp:'Woof!',spDesc:'Barks and blasts a nearby opponent away (no dash needed)',desc:'All-rounder. No weak points'},
+    usagi:{name:'Rabbit',sp:'Double Hop',spDesc:'Hops twice in a row in the same direction',desc:'Nimble. The arrow spins faster and the rest is shorter'},
+    oni:{name:'Oni',sp:'Iron Club',spDesc:'A heavy dash that sends the opponent flying',desc:'Heavy. Slow arrow, but hits hard'},
+    tanuki:{name:'Tanuki',sp:'Tea Kettle',spDesc:'Turns into an iron kettle and will not budge for 1 second, even when rammed',desc:'Its dash curves, so it is hard to read'},
+    issun:{name:'Issun-boshi',sp:'Lucky Mallet',spDesc:'Grows big and heavy for 5 seconds, then dashes',desc:'Tiny and light. Quick, but easy to push'}});
+  set(STG,{tsuchi:{name:'Clay Ring',desc:'The standard ring'},yuki:{name:'Snowy Night',desc:'Slippery. Snowdrifts at the edge brake you a little'},sabaku:{name:'Desert',desc:'Sand stops you fast. Dashes are quick and short'},
+    umi:{name:'Seashore',desc:'Slippery wet sand. Shells at the edge slow you in every direction'},uchu:{name:'Space',desc:'Weightless and slow. Once you move, you keep drifting'}});
+  set(LVS,{yowai:{name:'Easy',desc:'Thinks slowly and aims loosely. For first-timers'},futsuu:{name:'Normal',desc:'A well-matched opponent'},tsuyoi:{name:'Hard',desc:'Quick, aims well, and mashes fast'}});}
+const spName=c=>c.sp+(/[！!]$/.test(c.sp)?'':L('！','!'));   // 必殺技の名前（！つき）
 let LV='futsuu',SIMLV=null;try{const v=localStorage.getItem('anzumou_lv');if(LVS[v])LV=v;}catch(e){}
 function lvOf(i){if(i!==1)return LVS.futsuu;if(SIM)return LVS[SIMLV||'futsuu'];return cpu&&!WATCH?LVS[MLV||LV]:LVS.futsuu;}
 // ===== ものがたり（2026-11-08 だいさん「全部やって」）：インスタのリールと同じ むかしばなし。リールが出た日に その話の土俵がひらく =====
@@ -314,6 +426,14 @@ const STORY=[
   {k:'kaguya',d:'2026-11-20',t:'かぐやひめ',base:'usagi',shape:'usagi',name:'月の うさぎ',icon:'🌕',col:'#fff3c4',prop:'🎋',stg:'uchu',lv:'tsuyoi',line:'かぐやひめの むかえに来た、月の うさぎと'},
   {k:'yukionna',d:'2026-11-21',t:'ゆきおんな',base:'usagi',shape:'plain',name:'ゆきおんな',icon:'❄️',col:'#e3eeff',prop:'❄️',stg:'yuki',lv:'tsuyoi',line:'ふぶきの夜の ゆきおんなと'},
 ];
+if(EN){const SE={kasajizo:['Kasa Jizo','Jizo','Sumo with the Jizo statue who was given a straw hat on a snowy night'],tsuru:['The Grateful Crane','Crane','Sumo with the crane who weaves at the loom'],
+  suzume:['The Tongue-Cut Sparrow','Sparrow','Sumo at the sparrows\' inn in the bamboo grove'],sarukani:['The Monkey and the Crab','Monkey','Sumo with the mean monkey under the persimmon tree'],
+  urashima:['Urashima Taro','Turtle','Sumo with the turtle who leads the way to the Dragon Palace'],kobutori:['The Old Man with the Lump','Dancing Oni','Sumo with the oni dancing in the moonlight'],
+  omusubi:['The Rolling Rice Ball','Mouse','Sumo with the mice down the hole where the rice ball rolled'],momotaro:['Momotaro','Momotaro','Sumo with Momotaro on his way to Oni Island'],
+  kachikachi:['Kachi-Kachi Mountain','Tanuki','Sumo with the tanuki of Kachi-Kachi Mountain'],hanasaka:['The Old Man Who Made Flowers Bloom','Pochi','Dog-to-dog sumo with Pochi, the dog who makes flowers bloom'],
+  issun:['Issun-boshi','Issun-boshi','Sumo with Issun-boshi, who came in a rice-bowl boat'],warashibe:['The Straw Millionaire','Horse','Sumo with the horse traded up from a single straw'],
+  bunbuku:['The Lucky Tea Kettle','Kettle Tanuki','Sumo with the tightrope-walking kettle tanuki'],kaguya:['Princess Kaguya','Moon Rabbit','Sumo with the moon rabbit who came for Princess Kaguya'],
+  yukionna:['Yuki-onna','Yuki-onna','Sumo with the Snow Woman on a blizzard night']};for(const e of STORY){const x=SE[e.k];if(x){e.t=x[0];e.name=x[1];e.line=x[2];}}}
 // おはなしのもと（2026-11-10 だいさん「出所のリンクを貼って」）。青空文庫の図書カード。無いものは 書き手のいない昔話
 const AOZ='https:\/\/www.aozora.gr.jp/cards/';
 const SRC={sarukani:['楠山正雄「猿かに合戦」','000329/card18334'],suzume:['楠山正雄「舌切りすずめ」','000329/card18378'],urashima:['楠山正雄「浦島太郎」','000329/card3390'],
@@ -323,7 +443,7 @@ const SRC={sarukani:['楠山正雄「猿かに合戦」','000329/card18334'],suz
   kasajizo:['日本の昔話（語りつがれてきた話）'],tsuru:['日本の昔話（語りつがれてきた話）'],omusubi:['日本の昔話（「ねずみの浄土」とも）']};
 function showSrc(){const el=document.getElementById('srcList');el.innerHTML='';
   for(const e of STORY){const r=SRC[e.k];if(!r)continue;const d=document.createElement('div');
-    d.innerHTML='<b>'+e.t+'</b>：'+(r[1]?'<a href="'+AOZ+r[1]+'.html" target="_blank" rel="noopener" style="color:inherit">'+r[0]+'</a>':r[0]);el.appendChild(d);}}
+    d.innerHTML='<b>'+e.t+'</b>'+L('：',': ')+(r[1]?'<a href="'+AOZ+r[1]+'.html" target="_blank" rel="noopener" style="color:inherit">'+r[0]+'</a>':L(r[0],'Japanese folktale (passed down by word of mouth)'));el.appendChild(d);}}
 const ALL=/[?&]all/.test(location.search);
 function ymd(d){return d.toISOString().slice(0,10);}
 function jst(){return ymd(new Date(Date.now()+9*3600e3));}
@@ -332,18 +452,21 @@ let CLEAR={};try{CLEAR=JSON.parse(localStorage.getItem('anzumou_story')||'{}');}
 for(const k in CH)CH[k].key=k;
 const BASE5=Object.keys(CH);   // もとの5人（きょうの取組・おまかせは この5人から＝世界共通）
 function addNakama(){for(const e of STORY)if(CLEAR[e.k]&&!CH['s_'+e.k]){const b=CH[e.base];
-  CH['s_'+e.k]={...b,key:e.base,shape:e.shape,name:e.name,icon:e.icon,col:e.col,prop:e.prop,story:e.t,desc:`「${e.t}」で勝って なかまに。強さと必殺技は ${b.name} と同じ`};}}
+  CH['s_'+e.k]={...b,key:e.base,sid:e.k,shape:e.shape,name:e.name,icon:e.icon,col:e.col,prop:e.prop,story:e.t,desc:L(`「${e.t}」で勝って なかまに。強さと必殺技は ${b.name} と同じ`,`Joined you after “${e.t}”. Same strength and Special as ${b.name}`)};}}
+// ネットで もらった相手のキャラの名前を 自分の言語に（日本語の人と 英語の人が 取っても読める）
+function locC(c){if(!c||!CH[c.key])return c;const b=CH[c.key],e=c.sid&&STORY.find(x=>x.k===c.sid);return{...c,sp:b.sp,spDesc:b.spDesc,name:e?e.name:(c.shape||c.story)?c.name:b.name};}
 addNakama();
 // 番付：勝つと点（よわい1・ふつう2・つよい3）。負けても下がらない
 const BAN=[['序ノ口',0],['序二段',3],['三段目',8],['幕下',15],['十両',25],['前頭',40],['小結',60],['関脇',85],['大関',115],['横綱',150]];
 function banOf(pt){let i=0;for(let k=0;k<BAN.length;k++)if(pt>=BAN[k][1])i=k;return i;}
-function banTxt(pt){const i=banOf(pt),n=BAN[i+1];return '番付 '+BAN[i][0]+(n?`（あと${n[1]-pt}点で ${n[0]}）`:'（さいこう！）');}
+if(EN)['Jonokuchi','Jonidan','Sandanme','Makushita','Juryo','Maegashira','Komusubi','Sekiwake','Ozeki','Yokozuna'].forEach((n,i)=>BAN[i][0]=n);
+function banTxt(pt){const i=banOf(pt),n=BAN[i+1];return L('番付 ','Rank: ')+BAN[i][0]+(n?L(`（あと${n[1]-pt}点で ${n[0]}）`,` (${n[1]-pt} pt${n[1]-pt===1?'':'s'} to ${n[0]})`):L('（さいこう！）',' (top rank!)'));}
 // きょうの取組：UTC の日付で 世界じゅう同じ あいて・土俵（1日1回目だけ数える）
 function hmix(h){h^=h>>>16;h=Math.imul(h,0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);h^=h>>>16;return (h>>>0)/4294967296;}   // 終わりに よく混ぜる（最後の1文字だけ ちがう種でも ばらける・2026-11-10）
 function dayRnd(k){let h=2166136261;for(const ch of ymd(new Date())+k){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return hmix(h);}
 // 📅 週の取組（2026-11-10 だいさん「全部やって」）：UTC の週（月曜はじまり）ごとに 7日分の あいて・土俵・強さを 週の種＋曜日で決める。きょうの取組は その表の きょうの分（世界共通のまま）
 function weekKey(d=new Date()){return ymd(new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()-(d.getUTCDay()+6)%7)));}   // その週の月曜
-const dowIdx=()=>(new Date().getUTCDay()+6)%7,DOW='月火水木金土日';   // 0＝月 … 6＝日
+const dowIdx=()=>(new Date().getUTCDay()+6)%7,DOW=EN?['Mo','Tu','We','Th','Fr','Sa','Su']:[...'月火水木金土日'];   // 0＝月 … 6＝日
 function weekRnd(k){let h=2166136261;for(const ch of weekKey()+k){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return hmix(h);}
 function weekTable(){const ks=BASE5,ss=Object.keys(STG),ls=['futsuu','futsuu','tsuyoi'],t=[];
   for(let i=0;i<7;i++)t.push({opp:ks[Math.floor(weekRnd('o'+i)*ks.length)],stg:ss[Math.floor(weekRnd('s'+i)*ss.length)],lv:ls[Math.floor(weekRnd('l'+i)*ls.length)]});return t;}
@@ -354,17 +477,18 @@ function weekSync(){if(WEEK.wk!==weekKey()){WEEK={wk:weekKey(),res:{}};weekSave(
 function weekMark(r){weekSync();WEEK.res[dowIdx()]=r;if(!WEEK.done&&[0,1,2,3,4,5,6].every(i=>WEEK.res[i]==='勝ち')){WEEK.done=1;WEEK7=true;}weekSave();}
 function weekMarks(){weekSync();const td=dowIdx();return [...DOW].map((c,i)=>{const r=WEEK.res[i];return c+(r==='勝ち'?'✅':r==='負け'?'✖':i===td?'●':i<td?'－':'');}).join(' ');}
 // 🌤 夢の天気（2026-11-10 だいさん「全部やって」）：UTC の日付で1日1つ・世界共通。本物の満月の夜（前後1日）は 必殺技が1番に2回。効くのは たいせん・きょうの取組だけ。テスト用 ?w=ame|kaze|hare&moon=1
-const WXS={hare:{icon:'☀️',name:'はれ'},ame:{icon:'🌧️',name:'雨'},kaze:{icon:'🌬️',name:'風'}};
+const WXS={hare:{icon:'☀️',name:L('はれ','Clear')},ame:{icon:'🌧️',name:L('雨','Rain')},kaze:{icon:'🌬️',name:L('風','Wind')}};
+const wl=r=>r==='勝ち'?L('勝ち','Win'):L('負け','Loss');   // 中の記録は 日本語のまま（勝ち・負け）。見せるときだけ 言葉を選ぶ
 function moonAge(){const a=((Date.now()/864e5+2440587.5)-2451550.1)%29.530588853;return a<0?a+29.530588853:a;}
 function wxToday(){const q=new URLSearchParams(location.search);let w=q.get('w');if(!WXS[w]){const r=dayRnd('w');w=r<0.5?'hare':r<0.75?'ame':'kaze';}
   const m=q.get('moon');return{w,moon:m!=null?m==='1':Math.abs(moonAge()-14.77)<1.0};}
-function wxName(x){return (x.moon?'🌕 満月の ':'')+WXS[x.w].icon+WXS[x.w].name;}
+function wxName(x){return (x.moon?L('🌕 満月の ','🌕 Full moon · '):'')+WXS[x.w].icon+WXS[x.w].name;}
 let WX={w:'hare',moon:false,on:false},WIND_A=0,DEEP=0;   // DEEP＝夢の深さ（2＝連勝中で ぐっすり・1＝負けたあとで ねがえり）
 const wxA=()=>(!SIM&&WX.on)?WX.w:'hare';
 function fricNow(){const f=STG[stage].fric;return wxA()==='ame'&&f<0.97?f+0.012:f;}   // 雨＝すべる。土・砂漠だけ（雪・海・宇宙は もともと つるつるで、雨まで足すと突進が 0.26倍まで遅くなった → 見た目だけ・Fable 2026-11-10）
 let DAILY={};try{DAILY=JSON.parse(localStorage.getItem('anzumou_daily')||'{}');}catch(e){}
 let MODE='free',EP=null,FSTG=null,MLV=null;   // free＝ふつうの たいせん／story＝ものがたり／daily＝きょうの取組
-const OMAKASE={name:'おまかせ',icon:'🎲',desc:'毎番ちがう土俵（同じ土俵は続かない）'};
+const OMAKASE={name:L('おまかせ','Random'),icon:'🎲',desc:L('毎番ちがう土俵（同じ土俵は続かない）','A different ring every round')};
 const TH={   // 土俵ごとの色
   tsuchi:null,
   yuki:{bg:['#1c2440','#3a4668'],ring:'#e9f0f8',line:'#8aa0c0',txt:'#dfe6f2',flakes:true},
@@ -386,7 +510,8 @@ function stSpd(){return (STG[stage].speed||1)*slipR();}   // 突進・わん！�
 function dil(){return SLIP_DIL?Math.min(1,slipR()):1;}   // ゆっくりの土俵では、たぬきの曲がり・にだんとびの2回目を 同じ距離で起きるように のばす
 const mkST=()=>({self:[0,0],psh:[0,0],sp:[0,0],pun:[0,0],taps:[0,0],clW:[0,0],clL:[0,0]});   // あんずのひとこと用：自分から出た・押されて出た・必殺技・相手の休み中に押した・押した・連打合戦の勝ち負け
 let RPB=[],lastRP=null,RPM=null,RPT=0,rpAcc=0,utMe=0;   // 🎞 リプレイ：直近180コマ・試合が決まった点の分・その描き方（2026-11-10）／utMe＝うっちゃりで取った点
-let pita=[0,0],ST=mkST(),AGAIN=false,INTRO0=150,lastW=0;   // WATCH＝コンピューター同士の対戦を見る   // コンピューター同士の試し（描かない）
+let pita=[0,0],ST=mkST(),AGAIN=false,INTRO0=150,lastW=0,HS=0;   // HS＝当たった瞬間の「止め」（コマ）。loop だけが使う＝simulate には効かない
+const DUSTC={tsuchi:'rgba(170,130,80,.85)',yuki:'#ffffff',sabaku:'rgba(215,175,115,.9)',umi:'rgba(240,225,190,.85)',uchu:'rgba(200,200,225,.75)'};   // 土けむりの色   // WATCH＝コンピューター同士の対戦を見る   // コンピューター同士の試し（描かない）
 
 let PK=['anzu','oni'];   // この試合のキャラ
 function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i===1)?{...CH[EP.base],shape:EP.shape,name:EP.name,icon:EP.icon,col:EP.col,prop:EP.prop}:CH[PK[i]],a=i?0:Math.PI;
@@ -394,7 +519,7 @@ function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i
     cd:0,sq:0,out:false,face:0,team:i?css('--p2')||'#4d9de0':css('--p1')||'#ff6b6b',
     held:-1,stam:1,r0:Math.max(24,R0*0.13)*c.r,big:0,curve:0,clCool:0,spUsed:false,fun:0,twice:0,kana:0,cpuWait:Math.random()*40,cpuHold:0,spWarn:0,pitaT:0,sks:skOf(i),skN:{stop:SK_N,rev:SK_N,dodge:SK_N,hataki:SK_N,tame:SK_N},skT:0,skE:'',stopT:0,tame:0,sp2:(!SIM&&WX.on&&WX.moon)?1:0,spMoon:0};}
 function newRound(){waves=[];CL=null;UT=null;utRound=-1;if(stageSel==='omakase'&&!SIM){const ks=Object.keys(STG).filter(k=>k!==stage);stage=ks[Math.floor(Math.random()*ks.length)];}else if(stageSel!=='omakase')stage=stageSel;if(FSTG)stage=FSTG;
-  P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={t:(WX.on?(WX.moon?'🌕':'')+WXS[WX.w].icon+' ':'')+STG[stage].icon+' '+STG[stage].name+'　はっけよい…',life:60};freeze=SIM?1:60;parts=[];}
+  P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={t:(WX.on?(WX.moon?'🌕':'')+WXS[WX.w].icon+' ':'')+STG[stage].icon+' '+STG[stage].name+L('　はっけよい…','  Hakkeyoi…'),life:60};freeze=SIM?1:60;parts=[];}
 function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
   PK=[...pick];if(MODE==='story'){PK[0]='anzu';PK[1]=EP.base;}else if(MODE==='daily'){PK[1]=dailyCfg().opp;}   // えらんだキャラ（pick）は そのまま残す
   INTRO0=(MODE!=='net'&&AGAIN)?60:150;INTRO=(SIM||w||pr)?0:INTRO0;AGAIN=false;pita=[0,0];ST=mkST();   // 夢の入口は れんしゅう・見る では出さない。もう一番は短く（2026-11-09 Fable のレビューで）
@@ -491,8 +616,8 @@ try{Object.assign(REC,JSON.parse(localStorage.getItem('anzumou_rec')||'{}'));}ca
 function recSave(){try{localStorage.setItem('anzumou_rec',JSON.stringify(REC));}catch(e){}}
 const counting=()=>cpu&&!WATCH&&!PRACTICE&&!SIM;
 // 🏷 二つ名（2026-11-10 だいさん「全部やって」）：通算から1つ。REC.self＝自分から出た回数・REC.sp＝必殺技を使った回数（この日から数える）
-function titleOf(){const m=REC.m||0;if(m<3)return '見習いの';if((REC.kor||0)>=3&&REC.kor/m>=0.15)return 'うっちゃりの';if((REC.pita||0)/m>=1.5)return 'ピタッの名人';
-  const n=REC.spN||0;if(n>=3&&(REC.self||0)/n>=1)return 'はしっこの住人';if((REC.best||0)>=5)return '連勝の';if(n>=5&&(REC.sp||0)/n<0.3)return '必殺技わすれがち';return 'ふつうの力士';}   // self・sp は数えはじめてからの試合数（spN）で割る
+function titleOf(){const m=REC.m||0;if(m<3)return L('見習いの','Rookie');if((REC.kor||0)>=3&&REC.kor/m>=0.15)return L('うっちゃりの','Utchari');if((REC.pita||0)/m>=1.5)return L('ピタッの名人','Bullseye Master');
+  const n=REC.spN||0;if(n>=3&&(REC.self||0)/n>=1)return L('はしっこの住人','Edge-Dwelling');if((REC.best||0)>=5)return L('連勝の','Streaking');if(n>=5&&(REC.sp||0)/n<0.3)return L('必殺技わすれがち','Special-Forgetting');return L('ふつうの力士','Ordinary');}   // self・sp は数えはじめてからの試合数（spN）で割る
 function titleFull(k){return titleOf()+' '+(CH[k]||CH.anzu).name;}
 // ===== ネットたいせん（親＝合言葉をつくった人がゲームを動かす・子はボタンを送る） =====
 let NET=null,NETC=null,netK=0;
@@ -501,28 +626,43 @@ const netMsg=t=>{const e=document.getElementById('netMsg');if(e)e.textContent=t;
 function netSend(m){try{if(NET&&NET.conn&&NET.conn.open)NET.conn.send(m);}catch(e){}}
 function loadPeer(){return new Promise((ok,ng)=>{if(window.Peer)return ok();const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';sc.onload=()=>ok();sc.onerror=()=>ng(new Error('load'));document.head.appendChild(sc);});}
 function netClose(){if(NET){try{NET.conn&&NET.conn.close();}catch(e){}try{NET.peer&&NET.peer.destroy();}catch(e){}}NET=null;if(MODE==='net')MODE='free';}
-function netLost(){if(!NET)return;netClose();INTRO=0;STP=null;banner={t:'つながりが 切れました',life:120};if(state!=='menu'){state='over';document.getElementById('over').hidden=true;document.getElementById('bBack').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();}netMsg('つながりが 切れました');}
-function netWire(c){NET.conn=c;NET.rx=performance.now();c.on('data',m=>{if(NET)NET.rx=performance.now();onNet(m);});c.on('close',netLost);c.on('error',netLost);}
-setInterval(()=>{if(!NET||!NET.conn||!NET.conn.open)return;netSend({t:'pg'});if(performance.now()-NET.rx>6000)netLost();},1000);   // 相手のタブが閉じた・電波が切れた・スマホが眠った
-async function netHost(){netClose();netMsg('じゅんび中…');try{await loadPeer();}catch(e){netMsg('つなぐ道具を 読めませんでした（ネットを確かめてください）');return;}
+function netGiveUp(){if(!NET)return;netClose();INTRO=0;STP=null;banner={t:L('つながりが 切れました','Connection lost'),life:120};if(state!=='menu'){state='over';document.getElementById('over').hidden=true;document.getElementById('bBack').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();}netMsg(L('つながりが 切れました','Connection lost'));}
+// 切れたとき（2026-11-10）：試合の途中なら すぐ やめずに つなぎ直す。親は 25秒 待つ（ゲームは止まる）。子は 同じ合言葉で 入り直す（6回まで）。つながったら 続きから
+function netLost(c){if(!NET||(c&&NET.conn!==c))return;const mid=MODE==='net'&&P&&state!=='menu';
+  if(mid&&NET.role==='host'&&NET.peer&&!NET.peer.destroyed){if(NET.wait)return;try{NET.conn&&NET.conn.close();}catch(e){}NET.conn=null;NET.wait=performance.now();return;}
+  if(mid&&NET.role==='guest'&&(NET.retry||0)<6){const code=NET.code,n=(NET.retry||0)+1,w=NET.wait||performance.now();try{NET.conn&&NET.conn.close();}catch(e){}try{NET.peer&&NET.peer.destroy();}catch(e){}
+    NET={role:'guest',code,retry:n,wait:w};setTimeout(()=>{if(NET&&NET.retry===n&&!NET.peer)netJoin(code,true);},n>1?2500:400);return;}
+  netGiveUp();}
+function netWire(c){NET.conn=c;NET.rx=performance.now();c.on('data',m=>{if(NET)NET.rx=performance.now();onNet(m);});c.on('close',()=>netLost(c));c.on('error',()=>netLost(c));}
+setInterval(()=>{if(!NET)return;if(NET.wait){if(performance.now()-NET.wait>25000)netGiveUp();return;}if(!NET.conn||!NET.conn.open)return;netSend({t:'pg'});if(performance.now()-NET.rx>6000)netLost(NET.conn);},1000);   // 相手のタブが閉じた・電波が切れた・スマホが眠った
+const netMid=()=>MODE==='net'&&P&&state!=='menu';
+// 友だちに送るリンク（タップすると 合言葉を打たずに入れる）。手元のファイルや お試しのページでは 公開のページのリンクにする
+function roomUrl(code){const here=/^https?:$/.test(location.protocol)&&!/claude/.test(location.host);return (here?location.origin+location.pathname:SHARE_URL)+'?room='+code;}
+async function netInvite(){if(!NET||NET.role!=='host')return;const b=document.getElementById('bInvite'),r=await sendText(L('🐩 あんずもうで 対戦しよう！ このリンクを タップすると そのまま入れます（合言葉 ','🐩 Play Anzumou with me! Tap this link to join (code ')+NET.code+L('）\n',')\n')+roomUrl(NET.code));
+  if(r==='share'||r==='abort')return;b.textContent=r?L('リンクを コピーしました','Link copied'):L('コピーできませんでした','Could not copy');setTimeout(()=>{b.textContent=L('🔗 リンクを送る','🔗 Send invite link');},2000);}
+async function netHost(){netClose();document.getElementById('bInvite').hidden=true;netMsg(L('じゅんび中…','Getting ready…'));try{await loadPeer();}catch(e){netMsg(L('つなぐ道具を 読めませんでした（ネットを確かめてください）','Could not load the network library (check your connection)'));return;}
   const code=String(1000+Math.floor(Math.random()*9000)),peer=new Peer('anzumou-'+code);NET={role:'host',peer,code};
-  peer.on('open',()=>netMsg('合言葉は 「'+code+'」。友だちに つたえて、入ってくるのを 待っています…'));
-  peer.on('connection',c=>{if(NET.conn){c.close();return;}netWire(c);netMsg('つながりました！');});
-  peer.on('error',e=>{if(e.type==='unavailable-id')netHost();else netMsg('つなげませんでした（'+e.type+'）。お試しのページや 会社のネットでは つながりません');});}
-async function netJoin(){const code=(document.getElementById('netCode').value||'').replace(/\D/g,'');if(code.length!==4){netMsg('合言葉は 4けたの数字です');return;}
-  netClose();netMsg('つないでいます…');try{await loadPeer();}catch(e){netMsg('つなぐ道具を 読めませんでした（ネットを確かめてください）');return;}
-  const peer=new Peer();NET={role:'guest',peer,code};
-  peer.on('open',()=>{const c=peer.connect('anzumou-'+code,{reliable:true});netWire(c);c.on('open',()=>{netMsg('つながりました！ はじまるのを 待っています…');netSend({t:'hi',c:CH[pick[0]],sk:SKSEL});});
-    setTimeout(()=>{if(NET&&NET.role==='guest'&&!(NET.conn&&NET.conn.open))netMsg('つながりません。合言葉を 確かめてください');},9000);});
-  peer.on('error',e=>netMsg(e.type==='peer-unavailable'?'その合言葉の人が いません':'つなげませんでした（'+e.type+'）。お試しのページや 会社のネットでは つながりません'));}
+  peer.on('open',()=>{if(!NET||NET.peer!==peer||netMid())return;netMsg(L('合言葉は 「'+code+'」。下のボタンで リンクを送るか、合言葉を つたえて、入ってくるのを 待っています…','Your code is "'+code+'". Send the link below (or tell the code) and wait for your friend…'));document.getElementById('bInvite').hidden=false;});
+  peer.on('connection',c=>{if(!NET||NET.peer!==peer){c.close();return;}if(NET.conn&&NET.conn.open&&!NET.wait){c.close();return;}netWire(c);netMsg(L('つながりました！','Connected!'));});
+  peer.on('disconnected',()=>{try{if(NET&&NET.peer===peer&&!peer.destroyed)peer.reconnect();}catch(e){}});   // つなぐ係（サーバー）との線が切れたら 張り直す＝子が 入り直せるように
+  peer.on('error',e=>{if(!NET||NET.peer!==peer)return;if(e.type==='unavailable-id'&&!netMid())netHost();else if(!netMid())netMsg(L('つなげませんでした（','Could not connect (')+e.type+L('）。お試しのページや 会社のネットでは つながりません','). It does not work on preview pages or some office networks'));});}
+async function netJoin(code0,retry){const code=String(code0||document.getElementById('netCode').value||'').replace(/\D/g,'');if(code.length!==4){netMsg(L('合言葉は 4けたの数字です','The code is 4 digits'));return;}
+  if(!retry){netClose();netMsg(L('つないでいます…','Connecting…'));}
+  try{await loadPeer();}catch(e){if(retry)netLost();else netMsg(L('つなぐ道具を 読めませんでした（ネットを確かめてください）','Could not load the network library (check your connection)'));return;}
+  if(retry&&!(NET&&NET.retry&&!NET.peer))return;
+  const peer=new Peer();if(retry)NET.peer=peer;else NET={role:'guest',peer,code};
+  peer.on('open',()=>{if(!NET||NET.peer!==peer)return;const c=peer.connect('anzumou-'+code,{reliable:true});netWire(c);c.on('open',()=>{if(!NET||NET.conn!==c)return;netMsg(L('つながりました！ はじまるのを 待っています…','Connected! Waiting for the match to start…'));netSend({t:'hi',c:CH[pick[0]],sk:SKSEL});});
+    if(!retry)setTimeout(()=>{if(NET&&NET.peer===peer&&!(NET.conn&&NET.conn.open))netMsg(L('つながりません。合言葉を 確かめてください','No answer. Please check the code'));},9000);});
+  peer.on('error',e=>{if(!NET||NET.peer!==peer)return;if(NET.retry){netLost();return;}netMsg(e.type==='peer-unavailable'?L('その合言葉の人が いません','Nobody is waiting with that code'):L('つなげませんでした（','Could not connect (')+e.type+L('）。お試しのページや 会社のネットでは つながりません','). It does not work on preview pages or some office networks'));});}
 function netStart(){MODE='net';EP=null;MLV=null;FSTG=null;newMatch(false);netSend({t:'start',c:NETC,sk:NSK});}
 function onNet(m){if(!NET)return;
   if(NET.role==='host'){
-    if(m.t==='hi'){NETC=[CH[pick[0]],m.c];const g=Array.isArray(m.sk)?m.sk.map(k=>SKS[k]?k:'none').slice(0,2):['none','none'];NSK=[SKSEL,g];document.getElementById('netP').hidden=true;netStart();}
+    if(m.t==='hi'){if(NET.wait&&netMid()&&state!=='over'){NET.wait=0;netSend({t:'start',c:NETC,sk:NSK});return;}   // つなぎ直し：続きから（点・場所は 次の「様子」で そろう）
+      NET.wait=0;NETC=[CH[pick[0]],locC(m.c)];const g=Array.isArray(m.sk)?m.sk.map(k=>SKS[k]?k:'none').slice(0,2):['none','none'];NSK=[SKSEL,g];document.getElementById('netP').hidden=true;netStart();}
     else if(m.t==='sk'){if(INTRO>30)INTRO=30;}else if(m.t==='skl'){useSkill(1,m.k);}else if(m.t==='st'){stampGot(1,m.k);}else if(m.t==='d')down(1);else if(m.t==='u')up(1);else if(m.t==='sp')special(1);
     else if(m.t==='re'&&state==='over')netStart();}
-  else{
-    if(m.t==='start'){NETC=m.c;NSK=m.sk||null;MODE='net';document.getElementById('netP').hidden=true;newMatch(false);}
+  else{if(NET.wait&&(m.t==='start'||m.t==='snap')){NET.wait=0;NET.retry=0;}
+    if(m.t==='start'){NETC=(m.c||[]).map(locC);NSK=m.sk||null;MODE='net';document.getElementById('netP').hidden=true;newMatch(false);}
     else if(m.t==='snap')netApply(m);
     else if(m.t==='st')stampGot(0,m.k);
     else if(m.t==='s')SND.play(m.k,m.a);
@@ -530,10 +670,10 @@ function onNet(m){if(!NET)return;
 // 親：様子をまとめる（場所は 土俵の大きさで割って送る＝画面の大きさが ちがっても同じに見える）
 function netSnap(){const n=v=>Math.round(v*1e4)/1e4;
   return{t:'snap',st:state,sc:score,stg:stage,rr:n(ringR/R0),in:INTRO,sh:shake,lu:lastUt,kora:KORA,
-    bn:banner&&{t:banner.t,life:banner.life,col:banner.col},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
+    bn:banner&&{t:banner.t,life:banner.life,col:banner.col,w:banner.w,ut:banner.ut},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
     p:P.map(p=>[n((p.x-cx)/R0),n((p.y-cy)/R0),n(p.vx/R0),n(p.vy/R0),n(p.ang),n(p.r/R0),n(p.sq),p.out?1:0,p.cd,p.fun,p.kana,p.big,p.face,p.held,p.spUsed?1:0,p.spLock,n(p.stam),p.hitT||0,p.pitaT||0,p.spWarn||0,p.skN?[p.skN.stop,p.skN.rev,p.skN.dodge,p.skN.hataki,p.skN.tame]:0,Math.round(p.skT||0),p.skE||'',p.tame>0?1:0]),pt:pita};}   // 23番め＝ため中（輪を子にも見せる）
-const FLIP={'あなた':'あいて','あいて':'あなた','おされた…':'おしだした！','おしだした！':'おされた…'};   // 親から見た言葉を 子から見た言葉に
-function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:String(m.bn.t).replace(/あなた|あいて|おされた…|おしだした！/g,w=>FLIP[w])};CL=m.cl;
+// 点が決まったときの言葉は、子が 自分から見た言葉・自分の言語で 作り直す（banner.w＝勝った方 → pointTxt）
+function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:m.bn.w!=null?pointTxt(m.bn.w,m.bn.ut):String(m.bn.t)};CL=m.cl;
   m.p.forEach((a,i)=>{const p=P[i];if(!p)return;[p.x,p.y,p.vx,p.vy,p.ang,p.r,p.sq]=[cx+a[0]*R0,cy+a[1]*R0,a[2]*R0,a[3]*R0,a[4],a[5]*R0,a[6]];
     p.out=!!a[7];p.cd=a[8];p.fun=a[9];p.kana=a[10];p.big=a[11];p.face=a[12];p.held=a[13];p.spUsed=!!a[14];p.spLock=a[15];p.stam=a[16];p.hitT=a[17];p.pitaT=a[18]||0;p.spWarn=a[19]||0;if(a[20])p.skN={stop:a[20][0],rev:a[20][1],dodge:a[20][2],hataki:a[20][3]||0,tame:a[20][4]||0};p.skT=a[21]||0;p.skE=a[22]||'';p.tame=a[23]?1:0;});if(m.pt)pita=m.pt;}
 // 親の音は 子にも送る（勝ち負けの曲は それぞれが鳴らす）
@@ -558,7 +698,7 @@ function special(i){
   if(k==='tanuki'){SND.play('pon');p.fun=60;p.vx*=0.3;p.vy*=0.3;shake=Math.max(shake,5);}
   if(k==='issun'){SND.play('kozuchi');p.big=BIG_T;dash(p,1.0);}
   if(k==='oni'){SND.play('kana');dash(p,p.c.spMul||1.6);p.kana=45;p.cd=p.c.cd+10;shake=Math.max(shake,8);}
-  if(!SIM)banner={t:p.c.icon+' '+p.c.sp+(p.c.sp.endsWith('！')?'':'！'),life:50,col:p.team};
+  if(!SIM)banner={t:p.c.icon+' '+spName(p.c),life:50,col:p.team};
 }
 // ===== 土俵ぎわの連打合戦「こらえろ！」（2026-11-08 だいさん「飛ばされても踏ん張るシステム・連打とか」） =====
 // 押されて土俵ぎわまで来たら止まって連打合戦。v：-1＝こらえた／+1＝押し出された。押した側の連打は押し込み、押された側の連打はこらえ。
@@ -583,9 +723,9 @@ function clashStep(dt){CL.t+=dt;CL.v+=(CL.solo?0.011:0.002)*dt;
   clashPlace();const d=P[CL.d],a=P[CL.a];
   if(CL.v>=1||(CL.t>=CL_T&&CL.v>0.25)){ST.clL[d.i]++;d.vx=CL.ux*R0*0.025;d.vy=CL.uy*R0*0.025;d.hitT=45;d.face=20;CL=null;return;}   // 押し出された
   if(CL.v<=-1||CL.t>=CL_T){ST.clW[d.i]++;d.hitT=0;d.clCool=90;if(d.i===0&&counting()&&!CL.solo){REC.kor++;recSave();}shake=Math.max(shake,10);
-    if(CL.solo){d.vx=-CL.ux*R0*0.012;d.vy=-CL.uy*R0*0.012;CL=null;SND.play('koraeta');if(!SIM)banner={t:'こらえた！',life:50,col:d.team};return;}
+    if(CL.solo){d.vx=-CL.ux*R0*0.012;d.vy=-CL.uy*R0*0.012;CL=null;SND.play('koraeta');if(!SIM)banner={t:L('こらえた！','Held on!'),life:50,col:d.team};return;}
     const mx=(d.x+a.x)/2,my=(d.y+a.y)/2,cw=Math.random()<.5?1:-1;UT={d:d.i,a:a.i,mx,my,a0:Math.atan2(d.y-my,d.x-mx),rad:Math.hypot(d.x-mx,d.y-my),t:0,ux:CL.ux,uy:CL.uy,cw};CL=null;
-    SND.play('utchari');if(!SIM)banner={t:'うっちゃり！',life:60,col:d.team};}}
+    SND.play('utchari');if(!SIM)banner={t:L('うっちゃり！','Utchari!'),life:60,col:d.team};}}
 function utStep(dt){UT.t+=dt;const d=P[UT.d],a=P[UT.a],k=Math.min(1,UT.t/18),an=UT.a0+Math.PI*k*UT.cw;
   d.x=UT.mx+Math.cos(an)*UT.rad;d.y=UT.my+Math.sin(an)*UT.rad;a.x=UT.mx-Math.cos(an)*UT.rad;a.y=UT.my-Math.sin(an)*UT.rad;d.sq=a.sq=0.5;
   if(k>=1){const th=(UT_A0+Math.random()*UT_A1)*(Math.random()<.5?1:-1),c=Math.cos(th),s=Math.sin(th),vx=UT.ux*c-UT.uy*s,vy=UT.ux*s+UT.uy*c,sp=R0*UT_V/Math.sqrt(a.c.mass)*(STG[stage].speed||1);   // 投げる向きは外から少しずれる（必ず出るとは限らない）
@@ -599,6 +739,8 @@ const SKS={stop:{icon:'🦶',name:'ふんばる',desc:'その場で ピタッと
   tame:{icon:'💪',name:'ため',desc:'2秒の間に 押した突進が 1回だけ強くなる（必殺技には効かない）'}};
 let HATAKI_A=70*Math.PI/180,HATAKI_MUL=1.15,TAME_T=120,TAME_MUL=1.25;   // はたきで 回す角度と速さ／ための長さ（コマ）と強さ（simulate で試せる）。ためは 1.35 だと 組み合わせの勝率が 平均22ずれて強すぎたので 1.25（平均15・前からの技 ふんばる＋よける と同じくらい）
 const SK_N=2;   // 1番に2回まで
+if(EN)Object.entries({stop:['Brace','Stop dead on the spot. For when you are sliding out at the edge'],rev:['Reverse','Flip the arrow\'s spin direction, so you can aim sooner'],dodge:['Sidestep','A small step sideways to dodge a “!” or a dash'],
+  hataki:['Slap','Deflect an opponent charging at you. If nobody is coming, you whiff'],tame:['Charge','For 2 seconds, your next dash is stronger (not Specials)']}).forEach(([k,v])=>{SKS[k].name=v[0];SKS[k].desc=v[1];});
 let SKSEL=['none','none'];try{const v=(localStorage.getItem('anzumou_sk')||'').split(',');if(v.length===2&&v.every(k=>k==='none'||SKS[k]))SKSEL=v;}catch(e){}
 let NSK=null,SIMSK=null;   // ネットのときの 2人の技／simulate の技
 function skOf(i){if(SIM)return SIMSK||['none','none'];if(MODE==='net'&&NSK)return NSK[i]||['none','none'];return SKSEL;}   // コンピューターも あなたと同じ技
@@ -612,12 +754,12 @@ function useSkill(i,k){if(state!=='play'||!P||CL||UT||INTRO>0)return false;const
   else if(k==='hataki'){const op=P[1-i];   // はたき：向かってくる あいてを 横へ いなす（2026-11-10 だいさん「技を足して」）
     if(hatakiOk(p,op)){const sx=me2op(op,p),th=-sx*HATAKI_A,c=Math.cos(th),s=Math.sin(th),vx=op.vx,vy=op.vy,ov=Math.hypot(vx,vy)||1;   // 自分がいない側（通り過ぎる側）へ 回す
       op.vx=(vx*c-vy*s)*HATAKI_MUL;op.vy=(vx*s+vy*c)*HATAKI_MUL;op.face=20;op.hitT=45;op.sq=0.8;   // 押された扱い（雪だまりが効かない・リーチなら「こらえろ！」も起きうる）
-      p.vx+=-vy/ov*sx*R0*0.004;p.vy+=vx/ov*sx*R0*0.004;p.sq=0.6;p.skE='🫲 はたき！';if(!SIM){SND.play('hataki');shake=Math.max(shake,5);}if(i===myI())SND.buzz(60);return true;}   // 自分は 反対側へ 小さく
-    p.cd=Math.max(p.cd,20);p.vx+=Math.cos(p.ang)*R0*0.003;p.vy+=Math.sin(p.ang)*R0*0.003;p.skE='すかっ';if(!SIM)SND.play('suka');}   // 空振り：少し前へ よろけて休み
-  else if(k==='tame'){p.tame=TAME_T;p.skE='💪 ため';if(!SIM)SND.play('tame');}   // ため：2秒の間の ふつうの突進1回だけ ×TAME_MUL（1.25）
+      p.vx+=-vy/ov*sx*R0*0.004;p.vy+=vx/ov*sx*R0*0.004;p.sq=0.6;p.skE=L('🫲 はたき！','🫲 Slap!');if(!SIM){SND.play('hataki');shake=Math.max(shake,5);}if(i===myI())SND.buzz(60);return true;}   // 自分は 反対側へ 小さく
+    p.cd=Math.max(p.cd,20);p.vx+=Math.cos(p.ang)*R0*0.003;p.vy+=Math.sin(p.ang)*R0*0.003;p.skE=L('すかっ','Miss…');if(!SIM)SND.play('suka');}   // 空振り：少し前へ よろけて休み
+  else if(k==='tame'){p.tame=TAME_T;p.skE=L('💪 ため','💪 Charge');if(!SIM)SND.play('tame');}   // ため：2秒の間の ふつうの突進1回だけ ×TAME_MUL（1.25）
   if(i===myI())SND.buzz(30);return true;}
 // はたきが 決まるか：あいてが 速く、自分の方へ（0.6rad 以内）、近く（R0×0.6）
-function hatakiOk(p,op){if(op.out)return false;const sp=Math.hypot(op.vx,op.vy);return sp>R0*0.02&&Math.hypot(op.x-p.x,op.y-p.y)<R0*0.6&&angDiff(Math.atan2(op.vy,op.vx),Math.atan2(p.y-op.y,p.x-op.x))<0.6;}
+function hatakiOk(p,op){if(op.out)return false;const sp=Math.hypot(op.vx,op.vy);return sp>R0*0.02&&Math.hypot(op.x-p.x,op.y-p.y)<Math.max(R0*0.6,(p.r+op.r)*1.3)&&angDiff(Math.atan2(op.vy,op.vx),Math.atan2(p.y-op.y,p.x-op.x))<0.6;}
 // あいて（op）の進む向きから見て、自分（p）が 左（+1）か 右（-1）か
 function me2op(op,p){return (op.vx*(p.y-op.y)-op.vy*(p.x-op.x))>=0?1:-1;}
 // 必殺技ボタンの 左右に 技のボタン（えらんだものだけ）
@@ -639,7 +781,7 @@ function drawSpBtn(t){const b=spBtn();if(!b||state==='menu'||state==='over')retu
   ctx.fillStyle=ok?p.team:'#666';ctx.beginPath();ctx.arc(b.x,b.y,b.r*(ok?1+0.04*Math.sin(t/150):1),0,7);ctx.fill();
   ctx.lineWidth=3;ctx.strokeStyle=ok?'#ffd166':'#999';ctx.stroke();ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.font=`${Math.round(b.r*0.7)}px sans-serif`;ctx.fillText(p.c.icon,b.x,b.y-b.r*0.18);
-  ctx.font=`bold ${Math.round(b.r*0.3)}px sans-serif`;ctx.fillStyle='#fff';ctx.fillText(p.spUsed?'つかった':'必殺技',b.x,b.y+b.r*0.5);ctx.textBaseline='alphabetic';ctx.restore();}
+  ctx.font=`bold ${Math.round(b.r*0.3)}px sans-serif`;ctx.fillStyle='#fff';ctx.fillText(p.spUsed?L('つかった','Used'):L('必殺技','Special'),b.x,b.y+b.r*0.5);ctx.textBaseline='alphabetic';ctx.restore();}
 function inSpBtn(e){const b=spBtn();if(!b)return false;const rc=cv.getBoundingClientRect(),x=(e.clientX-rc.left)*W/rc.width,y=(e.clientY-rc.top)*H/rc.height;return Math.hypot(x-b.x,y-b.y)<b.r+14;}
 // 押した長さで分ける：押した瞬間ではなく、離したとき（短い）か 0.4秒たったとき（長い）に決める
 function down(i){if(state!=='play'||!P||UT)return;if(CL){if(i===CL.d||(i===CL.a&&!CL.solo))clashTap(i);return;}const p=P[i];if(p.held<0)p.held=0;}
@@ -695,7 +837,7 @@ function cpuThink(i,dt){
     if(has('stop')&&sp>R0*0.004&&Math.hypot(ex-cx,ey-cy)>ringR*0.95&&dC>ringR*0.55){useSkill(i,'stop');return;}
     const opSp2=Math.hypot(op.vx,op.vy),rush=opSp2>R0*0.02&&angDiff(Math.atan2(op.vy,op.vx),Math.atan2(me.y-op.y,me.x-op.x))<0.45;
     if(has('dodge')&&dOp<R0*0.6&&(op.spWarn>0||(rush&&dC>ringR*0.5))){useSkill(i,'dodge');return;}
-    if(has('hataki')&&hatakiOk(me,op)&&dOp<R0*0.55){useSkill(i,'hataki');return;}   // はたき：決まりそうなときだけ（2026-11-10）
+    if(has('hataki')&&hatakiOk(me,op)&&dOp<Math.max(R0*0.55,(me.r+op.r)*1.2)){useSkill(i,'hataki');return;}   // はたき：決まりそうなときだけ（2026-11-10）
     let d=(want-me.ang)%(Math.PI*2);if(d<0)d+=Math.PI*2;const go=me.spin>0?d:Math.PI*2-d;   // ねらう向きまで 矢印が回る残り
     if(has('tame')&&!(me.tame>0)&&me.cd<=0&&go>0.5&&go<1.2&&dC<ringR*0.6){useSkill(i,'tame');return;}   // ため：もうすぐ矢印が合うとき・真ん中近く
     if(has('rev')&&go>Math.PI*1.4){useSkill(i,'rev');return;}}
@@ -708,7 +850,7 @@ function cpuThink(i,dt){
 // ===== 毎フレーム =====
 function step(dt){
   if(INTRO>0){INTRO-=dt;return;}   // あんずが ねむって 夢に入るまで
-  if(freeze>0){freeze-=dt;if(freeze<=0&&state==='ready'){state='play';SND.play('nokotta');if(!SIM)banner={t:'のこった！',life:40};}}
+  if(freeze>0){freeze-=dt;if(freeze<=0&&state==='ready'){state='play';SND.play('nokotta');if(!SIM)banner={t:L('のこった！','Nokotta!'),life:40};}}
   const fr=fricNow();
   if(state==='play'&&CL)clashStep(dt);
   else if(state==='play'&&UT)utStep(dt);
@@ -749,6 +891,9 @@ function step(dt){
         if(a.kana>0||b.kana>0){a.kana=0;b.kana=0;}
         a.hitT=b.hitT=45;   // 押された直後は雪だまりのブレーキが効かない
         const hit=Math.abs(rv);if(hit>1)SND.play('hit',hit*(ka*kb));if(hit>2&&!SIM){shake=Math.min(18,hit*2*(ka*kb));a.sq=b.sq=Math.min(1,hit/6);a.face=b.face=20;
+          const hn=hit*(ka*kb)/(R0*0.045);if(hn>0.45)HS=Math.max(HS,Math.min(5,1.5+hn*1.6));   // 手ごたえ（2026-11-10）：強く当たるほど長く止まる（最大5コマ）。ふるえない iPhone・ふるえを切った人にも伝わる
+          waves.push({x:a.x+nx*a.r,y:a.y+ny*a.r,r:4,max:Math.min(R0*0.32,a.r*(0.6+hn)),life:14,c:'#ffffff'});
+          for(let k=0;k<8;k++){const q=k%2?a:b;parts.push({x:q.x+(Math.random()-.5)*q.r,y:q.y+q.r*0.85,vx:(Math.random()-.5)*5,vy:-Math.random()*1.5,life:22,c:DUSTC[stage]||DUSTC.tsuchi,s:4+Math.random()*3});}
           for(let k=0;k<10;k++)parts.push({x:a.x+nx*a.r,y:a.y+ny*a.r,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:24,c:'#ffd166',s:5});}}}
     for(const p of P){if(p.clCool>0)p.clCool-=dt;if(CL||UT||p.out||!(p.hitT>0)||p.clCool>0||P[1-p.i].out)continue;if(!PRACTICE&&!(KORA[p.i]>0&&score[1-p.i]===WIN-1))continue;   // 土俵ぎわは、あいてがリーチのときだけ・1試合1回（2026-11-08 だいさん）
       const dx=p.x-cx,dy=p.y-cy,d=Math.hypot(dx,dy);   // 土俵の中心からの距離（2026-11-09 Fable のレビューで）：前はこの行がコメントに飲み込まれ、2人の間の距離で決めていた（真ん中で急に「こらえろ！」・本当の土俵ぎわでは起きない）
@@ -757,14 +902,14 @@ function step(dt){
     for(const p of P){if(!p.out&&Math.hypot(p.x-cx,p.y-cy)>ringR+p.r*0.2){p.out=true;SND.play('out');if(p.hitT>0)ST.psh[p.i]++;else ST.self[p.i]++;}}   // 押されて出た／自分から出た（ひとこと用）
     const outs=P.filter(p=>p.out);
     if(PRACTICE&&outs.length){state='point';freeze=70;const me=P[0].out;if(me)pushed++;else pushes++;shake=14;
-      SND.play(me?'lose':'win');banner=me?{t:'おされた…',life:70,col:P[1].team}:{t:'おしだした！',life:70,col:P[0].team};}
+      SND.play(me?'lose':'win');banner=me?{t:L('おされた…','Pushed out…'),life:70,col:P[1].team}:{t:L('おしだした！','Push-out!'),life:70,col:P[0].team};}
     else if(!PRACTICE&&(outs.length||roundT>ROUND_T+6)){state='point';
       const d0=Math.hypot(P[0].x-cx,P[0].y-cy),d1=Math.hypot(P[1].x-cx,P[1].y-cy);
       const loser=outs.length===1?outs[0].i:(Math.abs(d0-d1)<1?(Math.random()<.5?0:1):(d0>d1?0:1));
-      const w=1-loser;score[w]++;shake=18;freeze=SIM?1:90;const byUt=utRound===w;utRound=-1;if(byUt)lastUt=w;else lastUt=-1;if(byUt&&w===0)utMe++;
+      const w=1-loser;score[w]++;shake=18;freeze=SIM?1:90;if(!SIM)HS=6;const byUt=utRound===w;utRound=-1;if(byUt)lastUt=w;else lastUt=-1;if(byUt&&w===0)utMe++;
       if(!SIM){lastRP=RPB.slice();RPT=45;RPM={stg:stage,c:[P[0].c,P[1].c],k:[P[0].k,P[1].k],team:[P[0].team,P[1].team]};}   // 🎞 決まり手（最後の点の分が残る）
       if(counting()&&w===0){REC.osh++;recSave();}
-      if(!SIM){SND.play(WATCH||w===0?'win':'lose');banner={t:byUt?'うっちゃりで逆転！':(w?'あいて':'あなた')+'の勝ち！',life:90,col:P[w].team};
+      if(!SIM){SND.play(WATCH||w===0?'win':'lose');banner={t:pointTxt(w,byUt),w,ut:byUt,life:90,col:P[w].team};
         for(let k=0;k<30;k++)parts.push({x:P[loser].x,y:P[loser].y,vx:(Math.random()-.5)*10,vy:(Math.random()-.5)*10,life:40,c:P[w].team,s:6});}}
   }
   if(state==='point'){for(const p of P){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.97;p.vy*=0.97;}
@@ -776,71 +921,75 @@ function step(dt){
   parts=parts.filter(q=>q.life>0);for(const w of waves)w.life-=dt;waves=waves.filter(w=>w.life>0);shake*=Math.pow(0.86,dt);if(banner){banner.life-=dt;if(banner.life<=0)banner=null;}
 }
 function chOf(i){return P&&P[i]?P[i].c:CH[PK[i]];}
+// 点が決まったときの言葉（自分から見た言葉・自分の言語で）。ネットの子は banner.w（勝った方）から 作り直す
+function pointTxt(w,ut){return ut?L('うっちゃりで逆転！','Utchari reversal!'):WATCH?chOf(w).name+L(' の勝ち！',' wins!'):w===myI()?L('あなたの勝ち！','You win!'):L('あいての勝ち！','Opponent wins!');}
+function dreamTxt(){return MODE==='story'&&EP?L(`…という、あんずの「${EP.t}」の夢でした 🐩💤`,`…and that was Anzu's dream of “${EP.t}” 🐩💤`):L('…という、あんずの夢でした 🐩💤',"…and that was Anzu's dream 🐩💤");}
 function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==='net')netSend({t:'end',s:netSnap()});NOFWD=1;SND.play(WATCH||(score[0]>score[1]?0:1)===myI()?'fanfare':'lose');NOFWD=0;document.getElementById('bBack').hidden=true;const w=score[0]>score[1]?0:1;
-  document.getElementById('winTxt').textContent=MODE==='net'?(w===myI()?'🎉 あなたの勝ち！':'あいての勝ち…')+'（'+chOf(w).icon+chOf(w).name+'）':(w?'🔵 ':'🔴 ')+chOf(w).icon+chOf(w).name+' の勝ち！';   // 1行に（あなた／あいては下の行に出る・2026-11-10）
+  document.getElementById('winTxt').textContent=MODE==='net'?(w===myI()?L('🎉 あなたの勝ち！','🎉 You win!'):L('あいての勝ち…','Opponent wins…'))+L('（',' (')+chOf(w).icon+chOf(w).name+L('）',')'):(w?'🔵 ':'🔴 ')+chOf(w).icon+chOf(w).name+L(' の勝ち！',' wins!');   // 1行に（あなた／あいては下の行に出る・2026-11-10）
   document.getElementById('winTxt').style.color=w?css('--p2'):css('--p1');
-  document.getElementById('scoreTxt').textContent=`${score[0]} − ${score[1]}${cpu?(w?'（コンピューターの勝ち）':'（あなたの勝ち）')+'・つよさ '+LVS[MLV||LV].name:''}`+(WATCH?'':`・ピタッ ${pita[myI()]}回`);lastW=w;
+  document.getElementById('scoreTxt').textContent=`${score[0]} − ${score[1]}${cpu?(w?L('（コンピューターの勝ち）',' (computer wins)'):L('（あなたの勝ち）',' (you win)'))+L('・つよさ ',' · Level ')+LVS[MLV||LV].name:''}`+(WATCH?'':L(`・ピタッ ${pita[myI()]}回`,` · Bullseye ×${pita[myI()]}`));lastW=w;
   const rl=document.getElementById('recLine');rl.textContent='';$('titleLine').textContent='';
   if(counting()){REC.m++;const c=REC.c[PK[0]]||(REC.c[PK[0]]={w:0,l:0});if(w===0){REC.w++;c.w++;REC.st++;REC.best=Math.max(REC.best,REC.st);REC.lst=0;}else{REC.l++;c.l++;REC.st=0;REC.lst=(REC.lst||0)+1;}REC.pita=(REC.pita||0)+pita[0];REC.self=(REC.self||0)+ST.self[0];REC.sp=(REC.sp||0)+ST.sp[0];REC.spN=(REC.spN||0)+1;recSave();   // spN＝この2つを数えはじめてからの試合数（前から遊んでいる人が急に「必殺技わすれがち」にならないように・Fable 2026-11-10）
-    rl.textContent=`通算 ${REC.w}勝${REC.l}敗`+(REC.st>=2?`・いま${REC.st}連勝！`:'')+(REC.st&&REC.st===REC.best&&REC.st>=2?'（さいこう記録）':'');
+    rl.textContent=L(`通算 ${REC.w}勝${REC.l}敗`,`Total ${REC.w}W ${REC.l}L`)+(REC.st>=2?L(`・いま${REC.st}連勝！`,` · ${REC.st} wins in a row!`):'')+(REC.st&&REC.st===REC.best&&REC.st>=2?L('（さいこう記録）',' (your best)'):'');
     const b0=banOf(REC.pt||0);if(w===0)REC.pt=(REC.pt||0)+({yowai:1,futsuu:2,tsuyoi:3}[MLV||LV]||2);const b1=banOf(REC.pt||0);
     let extra='';
-    if(MODE==='story'&&EP){if(w===0){const first=!CLEAR[EP.k];CLEAR[EP.k]=1;try{localStorage.setItem('anzumou_story',JSON.stringify(CLEAR));}catch(e){}addNakama();extra+=`📜「${EP.t}」${first?'クリア！':'もう一度 勝った！'}`+(first?`<br>🤝 ${EP.icon}${EP.name} が なかまに なった！（キャラをえらぶ で使える）`:'');}else extra+=`📜「${EP.t}」は また こんど…`;}
-    if(MODE==='daily'){const td=ymd(new Date());if(DAILY.d!==td){const y=ymd(new Date(Date.now()-864e5));DAILY={d:td,r:w===0?'勝ち':'負け',run:DAILY.d===y?(DAILY.run||1)+1:1};try{localStorage.setItem('anzumou_daily',JSON.stringify(DAILY));}catch(e){}extra+=`📅 きょうの取組：${DAILY.r}（${DAILY.run}日つづけて）`;
-        weekMark(DAILY.r);if(WEEK7)extra+='<br>🌙 七日の夢、おしまい（この週 7日 ぜんぶ勝ち！）';}
-      else extra+=`📅 きょうの分は もう数えました（1回目：${DAILY.r}・${DAILY.run}日つづけて）`;}   // 2回目からは 1回目の勝ち負けを そうと分かるように（2026-11-09 Fable のレビューで）
-    if(b1>b0)extra+=(extra?'　':'')+`🎌 番付が「${BAN[b1][0]}」に 上がった！`;
+    if(MODE==='story'&&EP){if(w===0){const first=!CLEAR[EP.k];CLEAR[EP.k]=1;try{localStorage.setItem('anzumou_story',JSON.stringify(CLEAR));}catch(e){}addNakama();extra+=L(`📜「${EP.t}」${first?'クリア！':'もう一度 勝った！'}`,`📜 “${EP.t}” ${first?'cleared!':'won again!'}`)+(first?L(`<br>🤝 ${EP.icon}${EP.name} が なかまに なった！（キャラをえらぶ で使える）`,`<br>🤝 ${EP.icon}${EP.name} joined you! (pick them on the Choose screen)`):'');}else extra+=L(`📜「${EP.t}」は また こんど…`,`📜 “${EP.t}” — maybe next time…`);}
+    if(MODE==='daily'){const td=ymd(new Date());if(DAILY.d!==td){const y=ymd(new Date(Date.now()-864e5));DAILY={d:td,r:w===0?'勝ち':'負け',run:DAILY.d===y?(DAILY.run||1)+1:1};try{localStorage.setItem('anzumou_daily',JSON.stringify(DAILY));}catch(e){}extra+=L(`📅 きょうの取組：${DAILY.r}（${DAILY.run}日つづけて）`,`📅 Today's Bout: ${wl(DAILY.r)} (${DAILY.run}-day streak)`);
+        weekMark(DAILY.r);if(WEEK7)extra+=L('<br>🌙 七日の夢、おしまい（この週 7日 ぜんぶ勝ち！）','<br>🌙 Seven Nights of Dreams, complete (you won all 7 days this week!)');}
+      else extra+=L(`📅 きょうの分は もう数えました（1回目：${DAILY.r}・${DAILY.run}日つづけて）`,`📅 Today was already counted (first try: ${wl(DAILY.r)} · ${DAILY.run}-day streak)`);}   // 2回目からは 1回目の勝ち負けを そうと分かるように（2026-11-09 Fable のレビューで）
+    if(b1>b0)extra+=(extra?'　':'')+L(`🎌 番付が「${BAN[b1][0]}」に 上がった！`,`🎌 Promoted to ${BAN[b1][0]}!`);
     recSave();rl.innerHTML=rl.textContent+(extra?'<br>'+extra:'')+'<br><span style="font-weight:400">'+banTxt(REC.pt||0)+'</span>';
-    $('titleLine').textContent='🏷 二つ名「'+titleFull(PK[0])+'」';diaryAdd();if(WEEK7)banner={t:'🌙 七日の夢、おしまい',life:9999,col:'#ffd23f'};}
+    $('titleLine').textContent=L('🏷 二つ名「'+titleFull(PK[0])+'」','🏷 Nickname: “'+titleFull(PK[0])+'”');diaryAdd();if(WEEK7)banner={t:L('🌙 七日の夢、おしまい','🌙 Seven Nights of Dreams, complete'),life:9999,col:'#ffd23f'};}
   try{const u=makeCard(w);document.getElementById('cardImg').src=u;document.getElementById('aSave').href=u;}catch(e){console.warn(e);}
   $('rpBox').hidden=WATCH||!!(NET&&NET.role==='guest'&&MODE==='net')||!lastRP||lastRP.length<20;   // 子は step を回さないので リプレイが無い
-  showTip(w);$('bShare').hidden=MODE==='net'||WATCH;$('bShare').textContent='結果を送る';
-  document.getElementById('dreamLine').textContent=MODE==='story'&&EP?`…という、あんずの「${EP.t}」の夢でした 🐩💤`:'…という、あんずの夢でした 🐩💤';
-  if(!WATCH&&MODE!=='net'&&SKSEL.every(k=>k==='none')){try{if(!localStorage.getItem('anzumou_skhint')){localStorage.setItem('anzumou_skhint','1');document.getElementById('recLine').innerHTML+='<br><span style="font-weight:400">💡 えらぶ画面で、必殺技ボタンの 左右に 技（ふんばる・逆向き・よける・はたき・ため）を 置けます</span>';}}catch(e){}}   // 1回だけ教える
+  showTip(w);$('bShare').hidden=MODE==='net'||WATCH;$('bShare').textContent=L('結果を送る','Share result');
+  document.getElementById('dreamLine').textContent=dreamTxt();
+  if(!WATCH&&MODE!=='net'&&SKSEL.every(k=>k==='none')){try{if(!localStorage.getItem('anzumou_skhint')){localStorage.setItem('anzumou_skhint','1');document.getElementById('recLine').innerHTML+='<br><span style="font-weight:400">'+L('💡 えらぶ画面で、必殺技ボタンの 左右に 技（ふんばる・逆向き・よける・はたき・ため）を 置けます','💡 On the Choose screen you can put moves (Brace, Reverse, Sidestep, Slap, Charge) left and right of the Special button')+'</span>';}}catch(e){}}   // 1回だけ教える
   if(WATCH){document.getElementById('over').hidden=false;return;}
   STP={t0:performance.now(),sent:-1};SB=[null,null];}   // スタンプの時間のあとで 結果の画面
 // あんずのひとこと（2026-11-09 Fable のレビューで）：everest_60days の「隊長のひとこと」と同じ。その試合の数字から 次の一手を1行だけ（一番効くもの1つ）
 function tipOf(w){const me=0,lv=MLV||LV,free=MODE==='free';
-  if(w===me){if(free&&lv==='futsuu'&&REC.st>=3)return['ふつうに 3連勝！ 🔥つよい に挑んでみる？','tsuyoi'];
-    if(ST.clW[me]>0)return['土俵ぎわで よく こらえた！ 連打の力が ついてきたね'];
-    if(pita[me]>=3)return[`ピタッ ${pita[me]}回！ 矢印の読みが ばっちり`];
-    if(pita[me]===0)return['勝った！ つぎは 矢印が ど真ん中を向いた瞬間に押して「ピタッ！」も ねらおう'];
-    return['いい取り口！ この調子で もう一番'];}
-  if(free&&lv==='futsuu'&&(REC.lst||0)>=3)return['ふつうに 3連敗…。🌱よわい で手ごたえを つかむのも手','yowai'];
-  if(ST.clL[me]>0)return['こらえるときは、指2本で交互に連打すると速い'];
-  if(ST.self[me]>=2)return['土俵のはしでは、真ん中へ戻る向きを待ってから押そう'];
-  if(ST.sp[me]===0)return['必殺技は、あいてが近くて はしにいるときに'];
-  if(pita[me]===0)return['矢印が ど真ん中を向いた瞬間に押すと「ピタッ！」で強くなる'];
-  return['あいての矢印がうすいとき（突進のすぐあと）が攻めどき'];}
+  if(w===me){if(free&&lv==='futsuu'&&REC.st>=3)return[L('ふつうに 3連勝！ 🔥つよい に挑んでみる？','3 wins in a row on Normal! Ready to try 🔥Hard?'),'tsuyoi'];
+    if(ST.clW[me]>0)return[L('土俵ぎわで よく こらえた！ 連打の力が ついてきたね','Great hold at the edge! Your mashing is getting strong')];
+    if(pita[me]>=3)return[L(`ピタッ ${pita[me]}回！ 矢印の読みが ばっちり`,`${pita[me]} Bullseyes! You read the arrow perfectly`)];
+    if(pita[me]===0)return[L('勝った！ つぎは 矢印が ど真ん中を向いた瞬間に押して「ピタッ！」も ねらおう','You won! Next, tap the instant the arrow points dead center for a “Bullseye!”')];
+    return[L('いい取り口！ この調子で もう一番','Nice bout! Keep it up — one more?')];}
+  if(free&&lv==='futsuu'&&(REC.lst||0)>=3)return[L('ふつうに 3連敗…。🌱よわい で手ごたえを つかむのも手','3 losses in a row on Normal… Getting the feel on 🌱Easy is a good idea'),'yowai'];
+  if(ST.clL[me]>0)return[L('こらえるときは、指2本で交互に連打すると速い','When holding on, mash with two fingers in turn — it is faster')];
+  if(ST.self[me]>=2)return[L('土俵のはしでは、真ん中へ戻る向きを待ってから押そう','Near the edge, wait for the arrow to point back to the center before you tap')];
+  if(ST.sp[me]===0)return[L('必殺技は、あいてが近くて はしにいるときに','Use your Special when the opponent is close and near the edge')];
+  if(pita[me]===0)return[L('矢印が ど真ん中を向いた瞬間に押すと「ピタッ！」で強くなる','Tap the instant the arrow points dead center for a stronger “Bullseye!” dash')];
+  return[L('あいての矢印がうすいとき（突進のすぐあと）が攻めどき','Attack right after the opponent dashes (while their arrow is faint)')];}
 function showTip(w){const box=$('tipBox'),b=$('bTipLv');box.hidden=true;b.hidden=true;if(!cpu||WATCH||PRACTICE||MODE==='net')return;
   const [t,lv]=tipOf(w);$('tipTxt').textContent=t;box.hidden=false;
-  if(lv){b.hidden=false;b.disabled=false;b.textContent=LVS[lv].icon+' '+LVS[lv].name+' にする';
-    b.onclick=()=>{LV=lv;try{localStorage.setItem('anzumou_lv',lv);}catch(e){}b.textContent='つよさを '+LVS[lv].icon+LVS[lv].name+' にしました（もう一番で）';b.disabled=true;};}}
+  if(lv){b.hidden=false;b.disabled=false;b.textContent=L(LVS[lv].icon+' '+LVS[lv].name+' にする','Switch to '+LVS[lv].icon+' '+LVS[lv].name);
+    b.onclick=()=>{LV=lv;try{localStorage.setItem('anzumou_lv',lv);}catch(e){}b.textContent=L('つよさを '+LVS[lv].icon+LVS[lv].name+' にしました（もう一番で）','Level set to '+LVS[lv].icon+LVS[lv].name+' (from the next bout)');b.disabled=true;};}}
 // 結果を文字で送る（2026-11-09 Fable のレビューで）：送れれば navigator.share、だめなら コピー
 function shareText(){const d=new Date(),me=myI();
-  let s=`🐩 あんずもう ${d.getMonth()+1}/${d.getDate()}　🔴${chOf(0).name} ${score[0]}−${score[1]} 🔵${chOf(1).name}`+(cpu?`（つよさ ${LVS[MLV||LV].name}）`:'')+`ピタッ ${pita[me]}回`;
-  if(MODE==='daily'&&DAILY.r)s+=`\n📅 きょうの取組 ${DAILY.r==='勝ち'?'✅':'✖'} ${DAILY.r}（${DAILY.run}日つづけて）`;
-  if(MODE==='story'&&EP)s+=lastW===0?`\n📜「${EP.t}」クリア！`:`\n📜「${EP.t}」は また こんど…`;
-  return s+`\n🎌 番付 ${BAN[banOf(REC.pt||0)][0]}\n${SHARE_URL}`;}
+  let s=L(`🐩 あんずもう ${d.getMonth()+1}/${d.getDate()}　🔴${chOf(0).name} ${score[0]}−${score[1]} 🔵${chOf(1).name}`+(cpu?`（つよさ ${LVS[MLV||LV].name}）`:'')+`ピタッ ${pita[me]}回`,
+    `🐩 Anzumou ${d.getMonth()+1}/${d.getDate()}  🔴${chOf(0).name} ${score[0]}−${score[1]} 🔵${chOf(1).name}`+(cpu?` (Level ${LVS[MLV||LV].name})`:'')+` Bullseye ×${pita[me]}`);
+  if(MODE==='daily'&&DAILY.r)s+=L(`\n📅 きょうの取組 ${DAILY.r==='勝ち'?'✅':'✖'} ${DAILY.r}（${DAILY.run}日つづけて）`,`\n📅 Today's Bout ${DAILY.r==='勝ち'?'✅':'✖'} ${wl(DAILY.r)} (${DAILY.run}-day streak)`);
+  if(MODE==='story'&&EP)s+=lastW===0?L(`\n📜「${EP.t}」クリア！`,`\n📜 “${EP.t}” cleared!`):L(`\n📜「${EP.t}」は また こんど…`,`\n📜 “${EP.t}” — maybe next time…`);
+  return s+L(`\n🎌 番付 ${BAN[banOf(REC.pt||0)][0]}\n${SHARE_URL}`,`\n🎌 Rank ${BAN[banOf(REC.pt||0)][0]}\n${SHARE_URL}`);}
 async function sendText(t){   // 'share'＝送った／'abort'＝やめた／true・false＝コピーできたか
   if(navigator.share){try{await navigator.share({text:t});return 'share';}catch(e){if(e&&e.name==='AbortError')return 'abort';}}
   let ok=false;try{await navigator.clipboard.writeText(t);ok=true;}catch(e){}
   if(!ok){try{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();ok=document.execCommand('copy');ta.remove();}catch(e){}}
   return ok;}
 async function shareGo(){const b=$('bShare'),r=await sendText(shareText());if(r==='share'||r==='abort')return;
-  b.textContent=r?'コピーしました':'コピーできませんでした';setTimeout(()=>{b.textContent='結果を送る';},2000);}
+  b.textContent=r?L('コピーしました','Copied'):L('コピーできませんでした','Could not copy');setTimeout(()=>{b.textContent=L('結果を送る','Share result');},2000);}
 // 📔 夢日記（2026-11-10 だいさん「全部やって」）：数える試合が終わるたびに1行（localStorage anzumou_diary・新しい順・200まで）
 let DIARY=[];try{const v=JSON.parse(localStorage.getItem('anzumou_diary')||'[]');if(Array.isArray(v))DIARY=v;}catch(e){}
 function diarySave(){DIARY=DIARY.slice(0,200);try{localStorage.setItem('anzumou_diary',JSON.stringify(DIARY));}catch(e){}}
 function diaryAdd(){const o=chOf(1);DIARY.unshift({d:jst(),mode:MODE,stg:stage,a:chOf(0).name,b:o.name,bi:o.icon,sc:[score[0],score[1]],pita:pita[0],ut:utMe>0,story:MODE==='story'&&EP?EP.t:'',lv:MLV||LV});
   if(WEEK7)DIARY.unshift({d:jst(),mode:'week7'});diarySave();}
-function diaryLine(e){if(e.mode==='week7')return '🌙 七日の夢 おしまい';const s=STG[e.stg]||{icon:'',name:''},sc=e.sc||[0,0],md=e.d?(+e.d.slice(5,7))+'/'+(+e.d.slice(8,10)):'';
-  return (sc[0]>sc[1]?'✅':'✖')+' '+(e.story?'📜'+e.story+' ':e.mode==='daily'?'📅':'')+md+' '+s.icon+s.name+'で '+(e.bi||'')+e.b+' に '+sc[0]+'−'+sc[1]+'（ピタッ'+(e.pita||0)+'回）'+(e.ut?' うっちゃり！':'');}
-function showDiary(){const L=DIARY.filter(e=>e.mode!=='week7'),el=$('diaryList');$('diarySum').textContent=`夢を見た日：${new Set(L.map(e=>e.d)).size}日・${L.length}番`;el.innerHTML='';
-  if(!DIARY.length){el.innerHTML='<p style="text-align:center">まだ 夢を見ていません。たいせん・ものがたり・きょうの取組で 取ると、1行ずつ たまります</p>';return;}
+function diaryLine(e){if(e.mode==='week7')return L('🌙 七日の夢 おしまい','🌙 Seven Nights of Dreams, complete');const s=STG[e.stg]||{icon:'',name:''},sc=e.sc||[0,0],md=e.d?(+e.d.slice(5,7))+'/'+(+e.d.slice(8,10)):'';
+  return (sc[0]>sc[1]?'✅':'✖')+' '+(e.story?'📜'+e.story+' ':e.mode==='daily'?'📅':'')+md+' '+s.icon+s.name+L('で ',' vs ')+(e.bi||'')+e.b+L(' に ',' ')+sc[0]+'−'+sc[1]+L('（ピタッ'+(e.pita||0)+'回）',' (Bullseye ×'+(e.pita||0)+')')+(e.ut?L(' うっちゃり！',' Utchari!'):'');}
+function showDiary(){const D=DIARY.filter(e=>e.mode!=='week7'),el=$('diaryList'),days=new Set(D.map(e=>e.d)).size;$('diarySum').textContent=L(`夢を見た日：${days}日・${D.length}番`,`Dream days: ${days} · ${D.length} bouts`);el.innerHTML='';
+  if(!DIARY.length){el.innerHTML='<p style="text-align:center">'+L('まだ 夢を見ていません。たいせん・ものがたり・きょうの取組で 取ると、1行ずつ たまります','No dreams yet. Each Battle, Story or Today\'s Bout adds one line')+'</p>';return;}
   for(const e of DIARY){const d=document.createElement('div');d.textContent=diaryLine(e);el.appendChild(d);}}
-async function diaryCopy(){const b=$('bDiaryCopy'),r=await sendText('📔 あんずの夢日記\n'+DIARY.slice(0,30).map(diaryLine).join('\n')+'\n'+SHARE_URL);if(r==='share'||r==='abort')return;
-  b.textContent=r?'コピーしました':'コピーできませんでした';setTimeout(()=>{b.textContent='夢日記をコピー';},2000);}
+async function diaryCopy(){const b=$('bDiaryCopy'),r=await sendText(L('📔 あんずの夢日記\n',"📔 Anzu's Dream Diary\n")+DIARY.slice(0,30).map(diaryLine).join('\n')+'\n'+SHARE_URL);if(r==='share'||r==='abort')return;
+  b.textContent=r?L('コピーしました','Copied'):L('コピーできませんでした','Could not copy');setTimeout(()=>{b.textContent=L('夢日記をコピー','Copy diary');},2000);}
 // 🎞 決まり手のリプレイ（2026-11-10 だいさん「全部やって」）：毎コマ 2人を R0 で割って 直近180コマ。点が決まったら その分と、そのあと45コマ
 function rpRec(dt){rpAcc+=dt;if(rpAcc<1)return;rpAcc%=1;const f={rr:ringR/R0,p:P.map(p=>[(p.x-cx)/R0,(p.y-cy)/R0,p.r/R0,p.ang,p.out?1:0,p.face||0,p.sq||0])};
   if(state==='play'){RPB.push(f);if(RPB.length>180)RPB.shift();}else if(lastRP&&RPT>0){RPT--;lastRP.push(f);}}
@@ -849,15 +998,16 @@ function rpDraw(t){const box=$('rpBox');if(box.hidden||!lastRP||!RPM||!lastRP.le
     const bg=g.createLinearGradient(0,0,0,h);bg.addColorStop(0,th?th.bg[0]:'#3a2b20');bg.addColorStop(1,th?th.bg[1]:'#5a4330');g.fillStyle=bg;g.fillRect(0,0,w,h);
     g.fillStyle=th?th.ring:'#e9cf9b';g.beginPath();g.arc(ox,oy,S+6,0,7);g.fill();g.strokeStyle=th?th.line:'#b8904f';g.lineWidth=3;g.beginPath();g.arc(ox,oy,f.rr*S,0,7);g.stroke();
     for(const j of[0,1]){const a=f.p[j];drawPoyo({i:j,k:RPM.k[j],c:RPM.c[j],x:ox+a[0]*S,y:oy+a[1]*S,vx:0,vy:0,r:a[2]*S,r0:a[2]*S,ang:a[3],out:!!a[4],face:a[5],sq:a[6],held:-1,spUsed:true,spLock:0,fun:0,kana:0,big:0,cd:0,noArrow:true,team:RPM.team[j]},t);}
-    g.font='bold 13px sans-serif';g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.fillStyle='#fff';g.textAlign='left';g.strokeText('🎞 決まり手',8,18);g.fillText('🎞 決まり手',8,18);
-    if(i>=n){g.textAlign='right';g.strokeText('もう一度…',w-8,18);g.fillText('もう一度…',w-8,18);}});}
+    g.font='bold 13px sans-serif';g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.fillStyle='#fff';g.textAlign='left';g.strokeText(L('🎞 決まり手','🎞 Winning move'),8,18);g.fillText(L('🎞 決まり手','🎞 Winning move'),8,18);
+    if(i>=n){g.textAlign='right';g.strokeText(L('もう一度…','Again…'),w-8,18);g.fillText(L('もう一度…','Again…'),w-8,18);}});}
 // 結果の画像（インスタの縦 4:5）
 function makeCard(w){const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d'),th=TH[stage],light=th&&th.light,ink=light?'#4a2e14':'#fff6e6';
   const bg=g.createLinearGradient(0,0,0,1350);bg.addColorStop(0,th?th.bg[0]:'#241b15');bg.addColorStop(1,th?th.bg[1]:'#4a3626');g.fillStyle=bg;g.fillRect(0,0,1080,1350);
   if(!light){g.fillStyle='rgba(255,255,255,.6)';for(let k=0;k<60;k++)g.fillRect((k*197)%1080,(k*113)%560,k%5?2:4,k%5?2:4);}
-  g.textAlign='center';g.fillStyle=ink;g.font='900 104px sans-serif';g.fillText('あんずもう',540,160);
-  g.font='bold 42px sans-serif';g.globalAlpha=.85;g.fillText(STG[stage].icon+' '+STG[stage].name+' の土俵',540,232);g.font='italic 36px sans-serif';g.globalAlpha=.75;g.fillText(MODE==='story'&&EP?'…という、あんずの「'+EP.t+'」の夢でした 🐩💤':MODE==='daily'?'きょうの取組 '+ymd(new Date()).slice(5).replace('-','/')+' …という、あんずの夢でした':'…という、あんずの夢でした 🐩💤',540,300);g.globalAlpha=1;
-  if(!WATCH){g.font='bold 44px sans-serif';g.lineWidth=7;g.strokeStyle='rgba(0,0,0,.55)';g.fillStyle='#ffd23f';const tx='✨ ピタッ '+pita[myI()]+'回';g.strokeText(tx,540,378);g.fillText(tx,540,378);}
+  g.textAlign='center';g.fillStyle=ink;g.font='900 104px sans-serif';g.fillText(L('あんずもう','ANZUMOU'),540,160);
+  g.font='bold 42px sans-serif';g.globalAlpha=.85;g.fillText(STG[stage].icon+' '+STG[stage].name+L(' の土俵',''),540,232);g.globalAlpha=.75;{const tx=MODE==='daily'?L('きょうの取組 ',"Today's Bout ")+ymd(new Date()).slice(5).replace('-','/')+L(' …という、あんずの夢でした'," …and that was Anzu's dream"):dreamTxt();
+    let fs=36;g.font='italic 36px sans-serif';while(fs>20&&g.measureText(tx).width>1010){fs-=2;g.font='italic '+fs+'px sans-serif';}g.fillText(tx,540,300);}g.globalAlpha=1;   // 長い題は 字を小さく
+  if(!WATCH){g.font='bold 44px sans-serif';g.lineWidth=7;g.strokeStyle='rgba(0,0,0,.55)';g.fillStyle='#ffd23f';const tx=L('✨ ピタッ '+pita[myI()]+'回','✨ Bullseye ×'+pita[myI()]);g.strokeText(tx,540,378);g.fillText(tx,540,378);}
   g.fillStyle=th?th.ring:'#e9cf9b';g.beginPath();g.ellipse(540,770,480,300,0,0,7);g.fill();g.strokeStyle=th?th.line:'#b8904f';g.lineWidth=12;g.beginPath();g.ellipse(540,770,425,262,0,0,7);g.stroke();
   const team=i=>i?css('--p2'):css('--p1');
   const win={i:w,k:(P&&P[w].k)||chOf(w).shape||chOf(w).key,c:chOf(w),x:420,y:700,vx:0,vy:0,r:150,ang:0,sq:0,held:-1,spUsed:true,spLock:0,fun:0,kana:0,big:0,cd:0,face:0,out:false,noArrow:true,team:team(w)};
@@ -865,10 +1015,10 @@ function makeCard(w){const c=document.createElement('canvas');c.width=1080;c.hei
   const keep=ctx;ctx=g;try{drawPoyo(los,0);drawPoyo(win,0);}finally{ctx=keep;}
   g.fillStyle='#ffcf3a';g.strokeStyle='#8a5a00';g.lineWidth=6;g.beginPath();const cx0=420,cy0=495;g.moveTo(cx0-90,cy0+50);g.lineTo(cx0-100,cy0-40);g.lineTo(cx0-45,cy0+5);g.lineTo(cx0,cy0-60);g.lineTo(cx0+45,cy0+5);g.lineTo(cx0+100,cy0-40);g.lineTo(cx0+90,cy0+50);g.closePath();g.fill();g.stroke();
   g.font='900 160px sans-serif';g.fillStyle=team(0);g.fillText(String(score[0]),400,1190);g.fillStyle=ink;g.fillText('−',540,1185);g.fillStyle=team(1);g.fillText(String(score[1]),680,1190);
-  g.font='bold 56px sans-serif';g.fillStyle=ink;g.fillText(chOf(w).icon+' '+chOf(w).name+(lastUt===w?' うっちゃりで勝ち！':' の勝ち！'),540,1268);
-  if(counting()){g.font='bold 34px sans-serif';g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.45)';g.fillStyle=ink;const tt='🎌 '+BAN[banOf(REC.pt||0)][0]+'　🏷「'+titleFull(PK[0])+'」';g.strokeText(tt,540,428);g.fillText(tt,540,428);}   // 番付と 二つ名（2026-11-10）
+  g.font='bold 56px sans-serif';g.fillStyle=ink;g.fillText(chOf(w).icon+' '+chOf(w).name+(lastUt===w?L(' うっちゃりで勝ち！',' wins by Utchari!'):L(' の勝ち！',' wins!')),540,1268);
+  if(counting()){g.font='bold 34px sans-serif';g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.45)';g.fillStyle=ink;const tt='🎌 '+BAN[banOf(REC.pt||0)][0]+L('　🏷「'+titleFull(PK[0])+'」','  🏷 “'+titleFull(PK[0])+'”');g.strokeText(tt,540,428);g.fillText(tt,540,428);}   // 番付と 二つ名（2026-11-10）
   if(WEEK7){g.strokeStyle='#ffd23f';g.lineWidth=26;g.strokeRect(13,13,1054,1324);g.strokeStyle='#a87a00';g.lineWidth=4;g.strokeRect(34,34,1012,1282);
-    g.font='bold 36px sans-serif';g.fillStyle='#ffd23f';g.fillText('🌙 七日の夢、おしまい',540,76);}   // 7日ぜんぶ勝ち：金のふち
+    g.font='bold 36px sans-serif';g.fillStyle='#ffd23f';g.fillText(L('🌙 七日の夢、おしまい','🌙 Seven Nights of Dreams, complete'),540,76);}   // 7日ぜんぶ勝ち：金のふち
   g.font='34px sans-serif';g.globalAlpha=.8;const d=new Date();g.fillText('@anzu_no_yoru ・ '+(d.getMonth()+1)+'/'+d.getDate(),540,1325);g.globalAlpha=1;
   return c.toDataURL('image/jpeg',0.9);}
 
@@ -903,50 +1053,52 @@ function draw(t){
   // 点と必殺技の残り
   ctx.font=`bold ${Math.max(18,R0*0.1)}px sans-serif`;ctx.textAlign='center';
   if(P&&state!=='menu')for(const i of[0,1]){const x=i?W*0.75:W*0.25,y0=58;ctx.fillStyle=i?css('--p2'):css('--p1');
-    ctx.fillText(PRACTICE?(i?'れんしゅう台':'おしだし '+pushes+'回'):'●'.repeat(score[i])+'○'.repeat(WIN-score[i]),x,y0+22);
+    ctx.fillText(PRACTICE?(i?L('れんしゅう台','Dummy'):L('おしだし '+pushes+'回','Push-outs: '+pushes)):'●'.repeat(score[i])+'○'.repeat(WIN-score[i]),x,y0+22);
     ctx.font=`${Math.max(12,R0*0.06)}px sans-serif`;ctx.fillStyle=th?th.txt:css('--sub');
     const fit2=(txt,y)=>{let fs=Math.max(12,R0*0.06);ctx.font=`${fs}px sans-serif`;while(fs>9&&ctx.measureText(txt).width>W*0.46){fs-=1;ctx.font=`${fs}px sans-serif`;}ctx.fillText(txt,x,y);};
-    fit2(P[i].c.icon+P[i].c.name,y0+44);fit2((P[i].spUsed?(PRACTICE?'必殺技 じゅんび中…':'必殺技 つかった'):P[i].spLock>0&&state==='play'?'必殺技 もうすぐ…':'必殺技 '+P[i].c.sp+' ★'+(P[i].sp2>0?'★':'')),y0+62);
-    if(!PRACTICE&&KORA[i]>0){const on=score[1-i]===WIN-1;ctx.globalAlpha=on?1:0.6;ctx.fillStyle=on?'#ffd166':(th?th.txt:css('--sub'));fit2(on?'🪢 土俵ぎわ OK！':'🪢 土俵ぎわ のこり1',y0+80);ctx.globalAlpha=1;}ctx.font=`bold ${Math.max(18,R0*0.1)}px sans-serif`;}
-  if(P&&state!=='menu'&&WX.on){ctx.save();ctx.font=`bold ${Math.max(11,R0*0.05)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.45)';ctx.fillStyle='#fff6e6';const wt='夢の天気 '+wxName(WX);ctx.strokeText(wt,cx,58+98);ctx.fillText(wt,cx,58+98);ctx.restore();}   // HUD の下に小さく
-  for(const w of waves){const k=1-w.life/24;ctx.globalAlpha=w.life/24;ctx.strokeStyle='#fff6c0';ctx.lineWidth=6;ctx.beginPath();ctx.arc(w.x,w.y,w.r+(w.max-w.r)*k,0,7);ctx.stroke();
+    fit2(P[i].c.icon+P[i].c.name,y0+44);fit2((P[i].spUsed?(PRACTICE?L('必殺技 じゅんび中…','Special: recharging…'):L('必殺技 つかった','Special: used')):P[i].spLock>0&&state==='play'?L('必殺技 もうすぐ…','Special: soon…'):L('必殺技 ','Special: ')+P[i].c.sp+' ★'+(P[i].sp2>0?'★':'')),y0+62);
+    if(!PRACTICE&&KORA[i]>0){const on=score[1-i]===WIN-1;ctx.globalAlpha=on?1:0.6;ctx.fillStyle=on?'#ffd166':(th?th.txt:css('--sub'));fit2(on?L('🪢 土俵ぎわ OK！','🪢 Edge stand ready!'):L('🪢 土俵ぎわ のこり1','🪢 Edge stand ×1'),y0+80);ctx.globalAlpha=1;}ctx.font=`bold ${Math.max(18,R0*0.1)}px sans-serif`;}
+  if(P&&state!=='menu'&&WX.on){ctx.save();ctx.font=`bold ${Math.max(11,R0*0.05)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.45)';ctx.fillStyle='#fff6e6';const wt=L('夢の天気 ','Dream weather: ')+wxName(WX);ctx.strokeText(wt,cx,58+98);ctx.fillText(wt,cx,58+98);ctx.restore();}   // HUD の下に小さく
+  for(const w of waves){const k=1-w.life/24;ctx.globalAlpha=w.life/24;ctx.strokeStyle=w.c||'#fff6c0';ctx.lineWidth=6;ctx.beginPath();ctx.arc(w.x,w.y,w.r+(w.max-w.r)*k,0,7);ctx.stroke();
     ctx.lineWidth=3;ctx.beginPath();ctx.arc(w.x,w.y,w.r+(w.max-w.r)*k*0.7,0,7);ctx.stroke();}ctx.globalAlpha=1;
   for(const q of parts){ctx.globalAlpha=Math.max(0,q.life/30);ctx.fillStyle=q.c;ctx.beginPath();ctx.arc(q.x,q.y,q.s,0,7);ctx.fill();}ctx.globalAlpha=1;
   if(P)for(const p of P)drawPoyo(p,t);
   if(P)for(const p of P){if(p.tame>0&&!p.out&&state==='play'){const bl=0.55+0.45*Math.sin(t/70),n=6;ctx.save();ctx.globalAlpha=bl;ctx.font=`${Math.max(11,p.r*0.32)}px sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";   // ため中：体のまわりに 力こぶの輪（黄色・点滅）
     ctx.strokeStyle='#ffd23f';ctx.lineWidth=3;ctx.setLineDash([6,6]);ctx.beginPath();ctx.arc(p.x,p.y,p.r*1.32,0,7);ctx.stroke();ctx.setLineDash([]);
     for(let k=0;k<n;k++){const a=k/n*Math.PI*2+t/600;ctx.fillText('💪',p.x+Math.cos(a)*p.r*1.32,p.y+Math.sin(a)*p.r*1.32);}ctx.textBaseline='alphabetic';ctx.restore();}}
-  if(P)for(const p of P){if(p.pitaT>0){const k=p.pitaT/30,y=p.y-p.r*1.55-(1-k)*18;ctx.save();ctx.globalAlpha=Math.min(1,k*2);ctx.font=`900 ${Math.max(16,R0*0.075)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd23f';ctx.strokeText('ピタッ！',p.x,y);ctx.fillText('ピタッ！',p.x,y);ctx.restore();}   // 真芯の小さな文字（頭の上）
+  if(P)for(const p of P){if(p.pitaT>0){const k=p.pitaT/30,y=p.y-p.r*1.55-(1-k)*18;ctx.save();ctx.globalAlpha=Math.min(1,k*2);ctx.font=`900 ${Math.max(16,R0*0.075)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd23f';ctx.strokeText(L('ピタッ！','Bullseye!'),p.x,y);ctx.fillText(L('ピタッ！','Bullseye!'),p.x,y);ctx.restore();}   // 真芯の小さな文字（頭の上）
     if(p.spWarn>0&&!p.out){const s=1+0.25*Math.sin(t/40);ctx.save();ctx.translate(p.x,p.y-p.r*1.6);ctx.scale(s,s);ctx.font=`900 ${Math.max(28,R0*0.13)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#ff3b30';ctx.strokeText('！',0,0);ctx.fillText('！',0,0);ctx.restore();}}   // 必殺技の予告
   if(CL&&P){const d=P[CL.d],a=P[CL.a],bw=Math.min(W*0.8,R0*1.4),bx=cx-bw/2,by=cy+(CL.uy<0?R0*0.5:-R0*0.45),bh=16,m=bx+bw*(CL.v+1)/2;   // 連打のゲージ：左＝こらえる 右＝押し出す
     ctx.fillStyle='rgba(20,16,30,.72)';ctx.beginPath();ctx.roundRect?ctx.roundRect(bx-14,by-74,bw+28,bh+112,14):ctx.rect(bx-14,by-74,bw+28,bh+112);ctx.fill();   // 暗い板（雪でも読める）
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(bx-3,by-3,bw+6,bh+6);ctx.fillStyle=d.team;ctx.fillRect(bx,by,m-bx,bh);ctx.fillStyle=CL.solo?'#888':a.team;ctx.fillRect(m,by,bx+bw-m,bh);
     ctx.fillStyle='#fff';ctx.fillRect(m-3,by-6,6,bh+12);ctx.font=`bold ${Math.max(13,R0*0.055)}px sans-serif`;ctx.fillStyle='#f2ead8';
-    ctx.textAlign='left';ctx.fillText('こらえる',bx,by+bh+18);ctx.textAlign='right';ctx.fillText(CL.solo?'土俵の外':'押し出す',bx+bw,by+bh+18);ctx.textAlign='center';
-    ctx.save();ctx.font=`900 ${Math.max(26,R0*0.13)}px sans-serif`;ctx.fillStyle='#ffd166';ctx.strokeStyle='#000';ctx.lineWidth=5;const tt='こらえろ！ 連打！',ty=by-38;ctx.strokeText(tt,cx,ty);ctx.fillText(tt,cx,ty);ctx.restore();
-    ctx.fillText('のこり '+Math.max(0,(CL_T-CL.t)/60).toFixed(1)+'秒　スタミナ '+'■'.repeat(Math.ceil(d.stam*5))+'□'.repeat(5-Math.ceil(d.stam*5)),cx,by-10);
+    ctx.textAlign='left';ctx.fillText(L('こらえる','Hold'),bx,by+bh+18);ctx.textAlign='right';ctx.fillText(CL.solo?L('土俵の外','Out'):L('押し出す','Push'),bx+bw,by+bh+18);ctx.textAlign='center';
+    ctx.save();ctx.font=`900 ${Math.max(26,R0*0.13)}px sans-serif`;ctx.fillStyle='#ffd166';ctx.strokeStyle='#000';ctx.lineWidth=5;const tt=L('こらえろ！ 連打！','Hold on! Mash!'),ty=by-38;ctx.strokeText(tt,cx,ty);ctx.fillText(tt,cx,ty);ctx.restore();
+    ctx.fillText(L('のこり ','')+Math.max(0,(CL_T-CL.t)/60).toFixed(1)+L('秒　スタミナ ','s  Stamina ')+'■'.repeat(Math.ceil(d.stam*5))+'□'.repeat(5-Math.ceil(d.stam*5)),cx,by-10);
     if(!WATCH&&(CL.d===myI()||(CL.a===myI()&&!CL.solo))){const me=P[myI()],sc=1+0.15*Math.sin(t/60);ctx.save();ctx.translate(me.x,me.y-me.r-26);ctx.scale(sc,sc);
-      ctx.font=`900 ${Math.max(20,R0*0.09)}px sans-serif`;ctx.fillStyle='#ffd166';ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.strokeText('連打！',0,0);ctx.fillText('連打！',0,0);ctx.restore();}}
+      ctx.font=`900 ${Math.max(20,R0*0.09)}px sans-serif`;ctx.fillStyle='#ffd166';ctx.strokeStyle='#000';ctx.lineWidth=4;ctx.strokeText(L('連打！','Mash!'),0,0);ctx.fillText(L('連打！','Mash!'),0,0);ctx.restore();}}
   if(th&&th.flakes){for(const f of flakes){f.y+=f.s;f.x+=Math.sin(t/900+f.p)*0.4;if(f.y>H)f.y=-5;ctx.globalAlpha=.8;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();}ctx.globalAlpha=1;}
   if(P&&state!=='menu'&&WX.on&&WX.w==='ame'){ctx.strokeStyle='rgba(190,210,255,.45)';ctx.lineWidth=1.5;ctx.beginPath();for(let k=0;k<70;k++){const x=((k*97.3+t*0.25)%(W+40))-20,y=((k*53.1+t*0.9)%(H+40))-20;ctx.moveTo(x,y);ctx.lineTo(x-4,y+14);}ctx.stroke();}   // 雨
   if(P&&state!=='menu'&&WX.on&&WX.w==='kaze'){const c=Math.cos(WIND_A),s=Math.sin(WIND_A);ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();
     for(let k=0;k<16;k++){const v=t*0.12*(1+k%3),x=(((k*131.7+c*v)%W)+W)%W,y=(((k*83.9+s*v)%H)+H)%H;ctx.moveTo(x,y);ctx.lineTo(x-c*34,y-s*34);}ctx.stroke();ctx.lineCap='butt';}   // 風のすじ（向き）
-  if(banner){ctx.font=`900 ${Math.max(28,R0*0.17)}px sans-serif`;ctx.fillStyle=banner.col||(snow?'#fff':css('--ink'));ctx.strokeStyle=th?th.bg[0]:css('--bg');ctx.lineWidth=6;
+  if(banner){let bf=Math.max(28,R0*0.17);ctx.font=`900 ${bf}px sans-serif`;while(bf>14&&ctx.measureText(banner.t).width>W-16){bf-=2;ctx.font=`900 ${bf}px sans-serif`;}ctx.fillStyle=banner.col||(snow?'#fff':css('--ink'));ctx.strokeStyle=th?th.bg[0]:css('--bg');ctx.lineWidth=6;
     ctx.globalAlpha=Math.min(1,banner.life/20);ctx.strokeText(banner.t,cx,cy-R0*0.55);ctx.fillText(banner.t,cx,cy-R0*0.55);ctx.globalAlpha=1;}
   drawSpBtn(t);drawSkBtns(t);
   if(P)for(const p of P){if(p.skT>0&&p.skE){const k=p.skT/34,y=p.y-p.r*1.9-(1-k)*16;ctx.save();ctx.globalAlpha=Math.min(1,k*2);ctx.font=`900 ${Math.max(14,R0*0.065)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#9ad1ff';ctx.strokeText(p.skE,p.x,y);ctx.fillText(p.skE,p.x,y);ctx.restore();}}
   if(STP)drawStamps(t);if(P)drawStampBubbles(t);
-  if(MODE==='net'&&P&&(state==='ready'||INTRO>0)&&!(INTRO>0)){const me=P[myI()];ctx.save();ctx.font=`900 ${Math.max(18,R0*0.08)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd166';ctx.strokeText('▼ あなた',me.x,me.y-me.r*1.9);ctx.fillText('▼ あなた',me.x,me.y-me.r*1.9);ctx.restore();}
-  if(TUT&&P&&(state==='play'||state==='ready')){const me=P[0],lines=TUT===1?['矢印が あいてを向いたら','「ちょん」と タップ！ 👆']:['こんどは 下の 丸ボタンで 必殺技！ 👇','（ぐっと長押し でも出る）'];
+  if(MODE==='net'&&P&&(state==='ready'||INTRO>0)&&!(INTRO>0)){const me=P[myI()];ctx.save();ctx.font=`900 ${Math.max(18,R0*0.08)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd166';ctx.strokeText(L('▼ あなた','▼ You'),me.x,me.y-me.r*1.9);ctx.fillText(L('▼ あなた','▼ You'),me.x,me.y-me.r*1.9);ctx.restore();}
+  if(TUT&&P&&(state==='play'||state==='ready')){const me=P[0],lines=TUT===1?L(['矢印が あいてを向いたら','「ちょん」と タップ！ 👆'],['When the arrow points at the opponent,','tap! 👆']):L(['こんどは 下の 丸ボタンで 必殺技！ 👇','（ぐっと長押し でも出る）'],['Now the round button below: Special! 👇','(or press and hold)']);
     ctx.font=`bold ${Math.max(16,Math.min(21,W/20))}px sans-serif`;ctx.textAlign='center';const tw=Math.min(W-24,Math.max(...lines.map(l=>ctx.measureText(l).width))+36),lh=Math.max(22,Math.min(28,W/15)),bh=lh*2+18,by=Math.min(H-SAFEB-bh-12,cy+R0+34);
     ctx.fillStyle='rgba(20,16,30,.85)';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-tw/2,by,tw,bh,14);else ctx.rect(cx-tw/2,by,tw,bh);ctx.fill();
     ctx.fillStyle='#ffd166';lines.forEach((l,k)=>ctx.fillText(l,cx,by+lh*(k+1)+2));
     if(TUT===1&&state==='play'){const tx=me.x+Math.cos(me.ang)*me.r*1.85,ty=me.y+Math.sin(me.ang)*me.r*1.85,good=angDiff(me.ang,Math.atan2(P[1].y-me.y,P[1].x-me.x))<0.35;
       ctx.strokeStyle=good?'#7cfc9a':'#ffd166';ctx.lineWidth=4;ctx.globalAlpha=.6+.4*Math.sin(t/120);ctx.beginPath();ctx.arc(tx,ty,me.r*0.5+(good?8:0),0,7);ctx.stroke();ctx.globalAlpha=1;
-      if(good){ctx.font=`900 ${Math.max(24,R0*0.11)}px sans-serif`;ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#7cfc9a';ctx.strokeText('いま！',me.x,me.y-me.r-30);ctx.fillText('いま！',me.x,me.y-me.r-30);}}}
-  if(state==='play'&&PRACTICE){ctx.font='14px sans-serif';ctx.fillStyle=th?th.txt:css('--sub');ctx.fillText('土俵＝突進　丸ボタン・長押し＝必殺技（何回でも）',cx,H-SAFEB-22);}
+      if(good){ctx.font=`900 ${Math.max(24,R0*0.11)}px sans-serif`;ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.fillStyle='#7cfc9a';ctx.strokeText(L('いま！','Now!'),me.x,me.y-me.r-30);ctx.fillText(L('いま！','Now!'),me.x,me.y-me.r-30);}}}
+  if(state==='play'&&PRACTICE){ctx.font='14px sans-serif';ctx.fillStyle=th?th.txt:css('--sub');ctx.fillText(L('土俵＝突進　丸ボタン・長押し＝必殺技（何回でも）','Ring = dash　Round button / hold = Special (unlimited)'),cx,H-SAFEB-22);}
   ctx.restore();
   if(INTRO>0&&P)drawDream(t);
+  if(NET&&NET.wait&&MODE==='net'){const left=Math.max(0,25-(performance.now()-NET.wait)/1000);ctx.save();ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,W,H);ctx.textAlign='center';ctx.fillStyle='#fff6e6';   // つなぎ直しの間
+    ctx.font=`900 ${Math.max(20,Math.min(30,W/14))}px sans-serif`;ctx.fillText(L('📡 つなぎ直しています…','📡 Reconnecting…'),W/2,H/2-6);ctx.font=`${Math.max(13,Math.min(17,W/24))}px sans-serif`;ctx.globalAlpha=.85;ctx.fillText(L('あと ','')+Math.ceil(left)+L('秒 待ちます','s left'),W/2,H/2+24);ctx.restore();}
 }
 // 夢の入口：夜空・ふとんで ねむる あんず・Zzz →「むかしばなしの 土俵の夢へ」（タップでとばせる）
 function drawDream(t){const a=INTRO<35?INTRO/35:1,el=INTRO0-INTRO;   // もう一番（INTRO0=60）は2つめの言葉だけ
@@ -961,11 +1113,11 @@ ctx.save();ctx.globalAlpha=a;
   ctx.save();ctx.translate(ax,ay);if(DEEP===1)ctx.rotate(-0.32+0.12*Math.sin(t/420));drawPoyo(p,t);ctx.restore();
   const nz=DEEP===2?5:3;   // 連勝中は ぐっすり＝Zzz が5つ
   ctx.textAlign='center';for(let q=0;q<nz;q++){const ph=((t/1100)+q/nz)%1;ctx.globalAlpha=a*(1-ph);ctx.fillStyle='#dfe6ff';ctx.font=`bold ${Math.round(r*(0.35+ph*0.35))}px sans-serif`;ctx.fillText('z',ax+r*0.9+ph*r*0.9,ay-r*0.9-ph*r*1.4);}
-  ctx.globalAlpha=a;ctx.fillStyle='#fff6e6';ctx.font=`bold ${Math.max(18,Math.min(26,W/15))}px sans-serif`;const L2=MODE==='story'&&EP?'「'+EP.t+'」の 夢へ':MODE==='daily'?'きょうの取組の 夢へ':'むかしばなしの 土俵の夢へ';const L1=DEEP===2?'あんずは ぐっすり…':DEEP===1?'あんずは ねがえりを うった…':'あんずが ねむると…',s1=INTRO0>=150?el<70:(DEEP>0&&el<30);   // もう一番の短い入口でも 夢の深さの言葉だけ出す
+  ctx.globalAlpha=a;ctx.fillStyle='#fff6e6';ctx.font=`bold ${Math.max(EN?15:18,Math.min(26,W/(EN?19:15)))}px sans-serif`;const L2=MODE==='story'&&EP?L('「'+EP.t+'」の 夢へ','Into the dream of “'+EP.t+'”'):MODE==='daily'?L('きょうの取組の 夢へ',"Into the dream of Today's Bout"):L('むかしばなしの 土俵の夢へ','Into a dream of folktale sumo');const L1=DEEP===2?L('あんずは ぐっすり…','Anzu is fast asleep…'):DEEP===1?L('あんずは ねがえりを うった…','Anzu tossed and turned…'):L('あんずが ねむると…','When Anzu falls asleep…'),s1=INTRO0>=150?el<70:(DEEP>0&&el<30);   // もう一番の短い入口でも 夢の深さの言葉だけ出す
   ctx.fillText(s1?L1:L2,W/2,ay+r*2.6);
-  if(WX.on){ctx.font=`bold ${Math.max(14,Math.min(19,W/21))}px sans-serif`;ctx.globalAlpha=a*0.9;ctx.fillText('今夜の夢は '+wxName(WX),W/2,ay+r*2.6+28);ctx.globalAlpha=a;}   // 夢の天気
-  if(MODE==='story'&&EP&&!s1){ctx.font=`${Math.max(13,Math.min(17,W/24))}px sans-serif`;ctx.globalAlpha=a*0.85;ctx.fillText(EP.line+' おすもう',W/2,ay+r*2.6+28);ctx.globalAlpha=a;}
-  ctx.globalAlpha=a*0.55;ctx.font='13px sans-serif';ctx.fillText('タップで とばす',W/2,ay+r*2.6+(MODE==='story'||WX.on?56:30));ctx.restore();}
+  if(WX.on){ctx.font=`bold ${Math.max(14,Math.min(19,W/21))}px sans-serif`;ctx.globalAlpha=a*0.9;ctx.fillText(L('今夜の夢は ',"Tonight's dream: ")+wxName(WX),W/2,ay+r*2.6+28);ctx.globalAlpha=a;}   // 夢の天気
+  if(MODE==='story'&&EP&&!s1){ctx.font=`${Math.max(EN?11:13,Math.min(17,W/(EN?30:24)))}px sans-serif`;ctx.globalAlpha=a*0.85;ctx.fillText(EP.line+L(' おすもう',''),W/2,ay+r*2.6+28);ctx.globalAlpha=a;}
+  ctx.globalAlpha=a*0.55;ctx.font='13px sans-serif';ctx.fillText(L('タップで とばす','Tap to skip'),W/2,ay+r*2.6+(MODE==='story'||WX.on?56:30));ctx.restore();}
 function drawPoyo(p,t){
   const sp=Math.hypot(p.vx,p.vy),mv=Math.atan2(p.vy,p.vx),k=p.k||p.c.shape||p.c.key;
   const st=1+Math.min(0.18,sp*0.02)+p.sq*0.08,sq=1/st;
@@ -1026,7 +1178,7 @@ function drawPoyo(p,t){
   ctx.restore();
 }
 let safeK=0;
-function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if((safeK++%20)===0)readSafe();if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest')&&!PAUSE)step(dt);
+function loop(t){if(window.__REC)return;const dt=Math.min(40,t-last)/16.67;last=t;if((safeK++%20)===0)readSafe();if(P&&state!=='over'&&state!=='menu'&&!(NET&&NET.role==='guest')&&!PAUSE&&!(NET&&NET.wait)){if(HS>0)HS-=dt;else step(dt);}
   if(NET&&NET.role==='host'&&MODE==='net'&&P&&state!=='menu'&&state!=='over'&&(netK++%2===0))netSend(netSnap());draw(t);
   bPause.hidden=!(P&&state!=='menu'&&state!=='over'&&MODE!=='net'&&!SIM);if(PAUSE)drawPause();
   if(!document.getElementById('over').hidden)rpDraw(t);if(!document.getElementById('title').hidden)drawVs(t);if(!document.getElementById('pickP').hidden)drawPv(t);requestAnimationFrame(loop);}
@@ -1039,10 +1191,10 @@ function onCanvas(c,fn){const w=c.clientWidth,h=c.clientHeight;if(!w||!h)return;
 function mkPick(el,list,get,set){el.innerHTML='';for(const [k,v] of Object.entries(list)){const b=document.createElement('button');b.className='ch'+(get()===k?' on':'');
   const isCh=!!CH[k];
   if(isCh){b.innerHTML=`<canvas></canvas><span>${v.name}</span>`;}else b.innerHTML=`<b style="font-size:${list.random?30:22}px;line-height:50px">${v.icon}</b>${v.name}`;
-  b.onclick=()=>{set(k);renderPick();if(k==='random'){document.getElementById('desc').innerHTML=`🎲<b>おまかせ</b>：${RND.desc}`;}else showDesc(isCh?k:null,isCh?null:k);if(isCh){pvKey=k;pvT0=performance.now();}};el.appendChild(b);
+  b.onclick=()=>{set(k);renderPick();if(k==='random'){document.getElementById('desc').innerHTML=`🎲<b>${RND.name}</b>${L('：',': ')}${RND.desc}`;}else showDesc(isCh?k:null,isCh?null:k);if(isCh){pvKey=k;pvT0=performance.now();}};el.appendChild(b);
   if(isCh){const c=b.querySelector('canvas'),i=el.id==='pick1'?1:0;requestAnimationFrame(()=>onCanvas(c,(g,w,h)=>drawPoyo(doll(k,i,Math.min(17,h*0.32)*(CH[k].r**0.5),w/2,h*0.46),0)));}}}
 let pvKey='anzu',pvT0=0;
-const RND={name:'おまかせ',icon:'🎲',desc:'毎試合、あいてのキャラが かわる'},OPPL={...CH,random:RND};
+const RND={name:L('おまかせ','Random'),icon:'🎲',desc:L('毎試合、あいてのキャラが かわる','A different opponent every match')},OPPL={...CH,random:RND};
 let oppSel='random';try{const v=localStorage.getItem('anzumou_opp');if(v&&(v==='random'||CH[v])){oppSel=v;if(CH[v])pick[1]=v;}}catch(e){}
 // えらんだキャラが必殺技を出してみせる（2.6秒でくり返し）
 function drawPv(t){const c=document.getElementById('pvCv');onCanvas(c,(g,w,h)=>{const k=CH[pvKey].key,ph=((t-pvT0)/1000)%2.6,r=26*(CH[pvKey].r**0.5),p=doll(pvKey,0,r,w*0.3,h*0.5);
@@ -1052,8 +1204,8 @@ function drawPv(t){const c=document.getElementById('pvCv');onCanvas(c,(g,w,h)=>{
     if(k==='oni'){p.kana=1;p.x+=Math.min(s,0.5)*w*0.7;}
     if(k==='tanuki'&&s<1.4)p.fun=1;
     if(k==='issun'){p.big=1;p.r=r*(1+0.55*Math.min(1,s*4));}
-    g.font='900 20px sans-serif';g.textAlign='center';g.fillStyle=css('--ink');g.fillText(CH[k].icon+' '+CH[k].sp+(CH[k].sp.endsWith('！')?'':'！'),w*0.7,28);}
-  else{g.font='14px sans-serif';g.textAlign='center';g.fillStyle=css('--sub');g.fillText('必殺技を見せるよ…',w*0.7,28);}
+    g.font='900 20px sans-serif';g.textAlign='center';g.fillStyle=css('--ink');g.fillText(CH[k].icon+' '+spName(CH[k]),w*0.7,28);}
+  else{g.font='14px sans-serif';g.textAlign='center';g.fillStyle=css('--sub');g.fillText(L('必殺技を見せるよ…','Watch the Special…'),w*0.7,28);}
   drawPoyo(p,t);});}
 // ホームの「たいせん」の絵：あなた vs あいて（さわると えらぶ画面）
 function vsOpp(t){if(oppSel!=='random')return pick[1];const ks=BASE5;   // おまかせは もとの5人だけ（なかまは まざらない）（2026-11-09 Fable のレビューで）
@@ -1063,22 +1215,22 @@ function drawVs(t){const c=document.getElementById('vsCv');onCanvas(c,(g,w,h)=>{
   g.fillStyle=th?th.ring:'#e9cf9b';g.beginPath();g.ellipse(w/2,h*0.78,w*0.48,h*0.28,0,0,7);g.fill();
   const a=doll(pick[0],0,40*(CH[pick[0]].r**0.5),w*0.27,h*0.55),b=doll(vsOpp(t),1,40*(CH[vsOpp(t)].r**0.5),w*0.73,h*0.55);a.sq=0.2*Math.abs(Math.sin(t/300));b.sq=0.2*Math.abs(Math.sin(t/300+1.5));drawPoyo(a,t);drawPoyo(b,t);
   g.font='900 30px sans-serif';g.textAlign='center';g.lineWidth=5;g.strokeStyle='#000';g.fillStyle='#ffd166';g.strokeText('VS',w/2,h*0.5);g.fillText('VS',w/2,h*0.5);
-  g.font='bold 13px sans-serif';g.fillStyle='#fff';g.strokeStyle='rgba(0,0,0,.6)';g.lineWidth=3;const st=(stageSel==='omakase'?'🎲 おまかせ':STG[stageSel].icon+' '+STG[stageSel].name);g.strokeText(st,w/2,20);g.fillText(st,w/2,20);});
-  document.getElementById('vsTxt').textContent=`🔴 あなた：${CH[pick[0]].name}　🔵 あいて：${oppSel==='random'?'🎲おまかせ':CH[pick[1]].name}　・つよさ ${LVS[LV].name}（さわると えらべる）`;}
-function showRec(){const rows=Object.keys(CH).map(k=>{const c=REC.c[k]||{w:0,l:0};return `<tr><td>${CH[k].icon} ${CH[k].name}</td><td>${c.w}勝</td><td>${c.l}敗</td></tr>`;}).join('');
+  g.font='bold 13px sans-serif';g.fillStyle='#fff';g.strokeStyle='rgba(0,0,0,.6)';g.lineWidth=3;const st=(stageSel==='omakase'?'🎲 '+OMAKASE.name:STG[stageSel].icon+' '+STG[stageSel].name);g.strokeText(st,w/2,20);g.fillText(st,w/2,20);});
+  document.getElementById('vsTxt').textContent=L(`🔴 あなた：${CH[pick[0]].name}　🔵 あいて：${oppSel==='random'?'🎲おまかせ':CH[pick[1]].name}　・つよさ ${LVS[LV].name}（さわると えらべる）`,`🔴 You: ${CH[pick[0]].name}　🔵 Opponent: ${oppSel==='random'?'🎲Random':CH[pick[1]].name}　· Level ${LVS[LV].name} (tap to choose)`);}
+function showRec(){const W_=L('勝','W'),L_=L('敗','L'),rows=Object.keys(CH).map(k=>{const c=REC.c[k]||{w:0,l:0};return `<tr><td>${CH[k].icon} ${CH[k].name}</td><td>${c.w}${W_}</td><td>${c.l}${L_}</td></tr>`;}).join('');
   const rate=REC.m?Math.round(REC.w/REC.m*100)+'%':'—';
-  document.getElementById('recBody').innerHTML=`<table class="rec"><tr><td>通算</td><td>${REC.w}勝</td><td>${REC.l}敗</td></tr><tr><td>勝率</td><td colspan="2">${rate}</td></tr>
-    <tr><td>いまの連勝</td><td colspan="2">${REC.st}</td></tr><tr><td>さいこう連勝</td><td colspan="2">${REC.best}</td></tr>
-    <tr><td>押し出した回数</td><td colspan="2">${REC.osh}</td></tr><tr><td>うっちゃり（こらえて逆転）</td><td colspan="2">${REC.kor}</td></tr><tr><td>ピタッ（真芯）</td><td colspan="2">${REC.pita||0}</td></tr></table>
-    <div class="lab">あなたが使ったキャラ</div><table class="rec">${rows}</table>`;}
+  document.getElementById('recBody').innerHTML=`<table class="rec"><tr><td>${L('通算','Total')}</td><td>${REC.w}${W_}</td><td>${REC.l}${L_}</td></tr><tr><td>${L('勝率','Win rate')}</td><td colspan="2">${rate}</td></tr>
+    <tr><td>${L('いまの連勝','Current streak')}</td><td colspan="2">${REC.st}</td></tr><tr><td>${L('さいこう連勝','Best streak')}</td><td colspan="2">${REC.best}</td></tr>
+    <tr><td>${L('押し出した回数','Push-outs')}</td><td colspan="2">${REC.osh}</td></tr><tr><td>${L('うっちゃり（こらえて逆転）','Utchari (edge reversals)')}</td><td colspan="2">${REC.kor}</td></tr><tr><td>${L('ピタッ（真芯）','Bullseyes')}</td><td colspan="2">${REC.pita||0}</td></tr></table>
+    <div class="lab">${L('あなたが使ったキャラ','Characters you used')}</div><table class="rec">${rows}</table>`;}
 function showDesc(c,s){const d=document.getElementById('desc');
-  if(c){const v=CH[c];d.innerHTML=`${v.icon}<b>${v.name}</b>：${v.desc}<br>必殺技「${v.sp}」…${v.spDesc}`;}
-  else if(s){const v=s==='omakase'?OMAKASE:(STG[s]||LVS[s]||SKD[s]);if(!v)return;d.innerHTML=`${v.icon}<b>${v.name}</b>：${v.desc}`;}}
-const SKD={none:{icon:'－',name:'なし',desc:'置かない（ボタン1つの遊びのまま）'},...SKS};
+  if(c){const v=CH[c];d.innerHTML=L(`${v.icon}<b>${v.name}</b>：${v.desc}<br>必殺技「${v.sp}」…${v.spDesc}`,`${v.icon}<b>${v.name}</b>: ${v.desc}<br>Special “${v.sp}” … ${v.spDesc}`);}
+  else if(s){const v=s==='omakase'?OMAKASE:(STG[s]||LVS[s]||SKD[s]);if(!v)return;d.innerHTML=`${v.icon}<b>${v.name}</b>${L('：',': ')}${v.desc}`;}}
+const SKD={none:{icon:'－',name:L('なし','None'),desc:L('置かない（ボタン1つの遊びのまま）','Nothing here (keep it a one-button game)')},...SKS},LR=j=>L((j?'右':'左')+'：',(j?'R':'L')+': ');
 function renderPick(){mkPick(document.getElementById('pick0'),CH,()=>pick[0],k=>pick[0]=k);mkPick(document.getElementById('pick1'),{...CH,random:RND},()=>oppSel,k=>{oppSel=k;if(CH[k])pick[1]=k;try{localStorage.setItem('anzumou_opp',k);}catch(e){}});
   mkPick(document.getElementById('pickS'),{omakase:OMAKASE,...STG},()=>stageSel,k=>stageSel=k);
   mkPick(document.getElementById('pickL'),LVS,()=>LV,k=>{LV=k;try{localStorage.setItem('anzumou_lv',k);}catch(e){}});
-  for(const j of[0,1]){const el=document.getElementById(j?'pickKR':'pickKL');mkPick(el,{none:{icon:'－',name:(j?'右':'左')+'：なし',desc:'置かない（ボタン1つの遊びのまま）'},...Object.fromEntries(Object.entries(SKS).map(([k,v])=>[k,{icon:v.icon,name:(j?'右':'左')+'：'+v.name,desc:v.desc}]))},()=>SKSEL[j],k=>{SKSEL[j]=k;if(k!=='none'&&SKSEL[1-j]===k)SKSEL[1-j]='none';try{localStorage.setItem('anzumou_sk',SKSEL.join(','));}catch(e){}});}}
+  for(const j of[0,1]){const el=document.getElementById(j?'pickKR':'pickKL');mkPick(el,{none:{icon:'－',name:LR(j)+SKD.none.name,desc:SKD.none.desc},...Object.fromEntries(Object.entries(SKS).map(([k,v])=>[k,{icon:v.icon,name:LR(j)+v.name,desc:v.desc}]))},()=>SKSEL[j],k=>{SKSEL[j]=k;if(k!=='none'&&SKSEL[1-j]===k)SKSEL[1-j]='none';try{localStorage.setItem('anzumou_sk',SKSEL.join(','));}catch(e){}});}}
 renderPick();showDesc('anzu');
 for(let k=0;k<70;k++)flakes.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:1+Math.random()*2.5,s:0.5+Math.random()*1.2,p:Math.random()*9});
 
@@ -1086,44 +1238,52 @@ document.getElementById('b1p').onclick=()=>{netClose();MODE='free';EP=null;FSTG=
 function showStory(){const el=document.getElementById('storyList');el.innerHTML='';
   for(const e of STORY){const o=stOpen(e),b=document.createElement('button');b.className='ghost';b.style.cssText='display:flex;align-items:center;gap:10px;text-align:left;margin:0;width:100%';
     const md=e.d.slice(5).replace('-','/').replace(/^0/,'');
-    b.innerHTML=`<span style="font-size:26px">${o?e.icon:'🔒'}</span><span style="flex:1"><b>${e.t}</b><br><small>${o?'あいて '+e.name+'・'+STG[e.stg].icon+STG[e.stg].name+'・'+LVS[e.lv].name:md+' のリールで ひらく'}</small></span><span style="font-size:12px;text-align:center">${CLEAR[e.k]?'✅<br>なかま':''}</span>`;
+    b.innerHTML=`<span style="font-size:26px">${o?e.icon:'🔒'}</span><span style="flex:1"><b>${e.t}</b><br><small>${o?L('あいて ','vs ')+e.name+L('・',' · ')+STG[e.stg].icon+STG[e.stg].name+L('・',' · ')+LVS[e.lv].name:L(md+' のリールで ひらく','Opens on '+md)}</small></span><span style="font-size:12px;text-align:center">${CLEAR[e.k]?L('✅<br>なかま','✅<br>Friend'):''}</span>`;
     b.disabled=!o;if(!o)b.style.opacity='.5';
     b.onclick=()=>{MODE='story';EP=e;FSTG=e.stg;MLV=e.lv;document.getElementById('storyP').hidden=true;newMatch(true);};el.appendChild(b);}}
 document.getElementById('bStory').onclick=()=>{showStory();showSrc();document.getElementById('title').hidden=true;document.getElementById('storyP').hidden=false;};
 document.getElementById('bStoryClose').onclick=()=>{document.getElementById('storyP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bDaily').onclick=()=>{const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
 function homeInfo(){const d=dailyCfg(),td=ymd(new Date()),bd=document.getElementById('bDaily');
-  document.getElementById('banLine').textContent='🎌 '+banTxt(REC.pt||0)+'　🏷「'+titleFull(pick[0])+'」';
-  document.getElementById('wxLine').textContent='今夜の夢の天気：'+wxName(wxToday())+'（たいせん・きょうの取組に効く）';
-  bd.innerHTML=(DAILY.d===td?`📅 きょうの取組 ${DAILY.r==='勝ち'?'✅':'✖'}`:'📅 きょうの取組')+`<span class="wk">${weekMarks()}</span>`;   // 週の取組（●＝きょう まだ）
-  const n=STORY.filter(stOpen).length,c=STORY.filter(e=>CLEAR[e.k]).length;document.getElementById('bStory').textContent=`📜 ものがたり ${c}/${n}`;}
+  document.getElementById('banLine').textContent='🎌 '+banTxt(REC.pt||0)+L('　🏷「'+titleFull(pick[0])+'」','　🏷 “'+titleFull(pick[0])+'”');
+  document.getElementById('wxLine').textContent=L('今夜の夢の天気：',"Tonight's dream weather: ")+wxName(wxToday())+L('（たいせん・きょうの取組に効く）'," (affects Battle and Today's Bout)");
+  bd.innerHTML=L('📅 きょうの取組',"📅 Today's Bout")+(DAILY.d===td?(DAILY.r==='勝ち'?' ✅':' ✖'):'')+`<span class="wk">${weekMarks()}</span>`;   // 週の取組（●＝きょう まだ）
+  const n=STORY.filter(stOpen).length,c=STORY.filter(e=>CLEAR[e.k]).length;document.getElementById('bStory').textContent=L('📜 ものがたり ','📜 Stories ')+`${c}/${n}`;}
 homeInfo();
 document.getElementById('bHow').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('howto').hidden=false;document.querySelector('#howto .box').scrollTop=0;};
 const $=id=>document.getElementById(id);
 $('bPick').onclick=$('vsCv').onclick=()=>{$('title').hidden=true;$('pickP').hidden=false;renderPick();pvT0=performance.now();};
 $('bPickOk').onclick=()=>{$('pickP').hidden=true;$('title').hidden=false;homeInfo();};
-$('bRec').onclick=()=>{showRec();$('title').hidden=true;$('recP').hidden=false;};
+$('bMore').onclick=()=>{$('title').hidden=true;$('moreP').hidden=false;};$('bMoreClose').onclick=()=>{$('moreP').hidden=true;$('title').hidden=false;};
+$('bLang').textContent=EN?'🌐 日本語にする':'🌐 English';$('bLang').onclick=()=>{try{localStorage.setItem('anzumou_lang',EN?'ja':'en');}catch(e){}location.replace(location.pathname);};
+// ホーム画面に置く（公開のページだけ）：Android は ボタン、iPhone は やり方を1行
+let INST=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();INST=e;$('bInstall').hidden=false;});
+$('bInstall').onclick=async()=>{if(!INST)return;INST.prompt();try{await INST.userChoice;}catch(e){}INST=null;$('bInstall').hidden=true;};
+if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&location.protocol==='https:'&&!window.claude)$('iosHint').hidden=false;
+$('bRec').onclick=()=>{showRec();$('moreP').hidden=true;$('title').hidden=true;$('recP').hidden=false;};
 $('bRecClose').onclick=()=>{$('recP').hidden=true;$('title').hidden=false;};
-$('bDiary').onclick=()=>{showDiary();$('title').hidden=true;$('diaryP').hidden=false;$('diaryList').scrollTop=0;};
+$('bDiary').onclick=()=>{showDiary();$('moreP').hidden=true;$('title').hidden=true;$('diaryP').hidden=false;$('diaryList').scrollTop=0;};
 $('bDiaryClose').onclick=()=>{$('diaryP').hidden=true;$('title').hidden=false;};$('bDiaryCopy').onclick=diaryCopy;
 // 画像を保存：claude.ai のページでは downloads の力で保存（ふつうのリンクは効かない）。手元のファイルではふつうのリンクのまま
 let DL=null;if(window.claude&&window.claude.use){$('aSave').hidden=true;claude.use('downloads').then(d=>{DL=d;if(d)$('aSave').hidden=false;}).catch(()=>{});}
 $('aSave').addEventListener('click',async e=>{if(!DL)return;e.preventDefault();const u=$('aSave').href,b=atob(u.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);
   try{await DL.save({filename:'anzumou_'+PK[0]+'_'+PK[1]+'.jpg',data:new Blob([a])});}catch(err){if(err&&err.code!=='declined'&&err.code!=='rate_limited')$('aSave').hidden=true;}});
 document.getElementById('bHowClose').onclick=()=>{document.getElementById('howto').hidden=true;document.getElementById('title').hidden=false;};
-document.getElementById('bpr').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,false,true);};
+document.getElementById('bpr').onclick=()=>{$('moreP').hidden=true;MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,false,true);};
 document.getElementById('bBack').onclick=()=>{setPause(false);STP=null;SB=[null,null];netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
-document.getElementById('bw').onclick=()=>{MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,true);};
-document.getElementById('bRe').onclick=()=>{if(MODE==='net'&&NET){if(NET.role==='host')netStart();else{netSend({t:'re'});document.getElementById('scoreTxt').textContent='あいてを 待っています…';}return;}AGAIN=true;newMatch(cpu,WATCH);};
+document.getElementById('bw').onclick=()=>{$('moreP').hidden=true;MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,true);};
+document.getElementById('bRe').onclick=()=>{if(MODE==='net'&&NET){if(NET.role==='host')netStart();else{netSend({t:'re'});document.getElementById('scoreTxt').textContent=L('あいてを 待っています…','Waiting for the opponent…');}return;}AGAIN=true;newMatch(cpu,WATCH);};
 $('bShare').onclick=shareGo;
-document.getElementById('bNet').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('netP').hidden=false;netMsg(NET&&NET.conn&&NET.conn.open?'つながっています':'');};
-document.getElementById('bNetClose').onclick=()=>{netClose();document.getElementById('netP').hidden=true;document.getElementById('title').hidden=false;};
-document.getElementById('bHost').onclick=netHost;document.getElementById('bJoin').onclick=netJoin;
+document.getElementById('bNet').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('netP').hidden=false;netMsg(NET&&NET.conn&&NET.conn.open?L('つながっています','Connected'):'');};
+document.getElementById('bNetClose').onclick=()=>{netClose();$('bInvite').hidden=true;document.getElementById('netP').hidden=true;document.getElementById('title').hidden=false;};
+document.getElementById('bHost').onclick=()=>netHost();document.getElementById('bJoin').onclick=()=>netJoin();$('bInvite').onclick=netInvite;
+// リンクで来た人（?room=1234）：合言葉を打たずに そのまま入る
+{const rm=(new URLSearchParams(location.search).get('room')||'').replace(/\D/g,'');if(rm.length===4){try{history.replaceState(null,'',location.pathname);}catch(e){}$('title').hidden=true;$('netP').hidden=false;$('netCode').value=rm;netJoin(rm);}}
 document.getElementById('bMenu').onclick=()=>{setPause(false);STP=null;SB=[null,null];netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;state='menu';homeInfo();};
 // ===== 一時休止（2026-11-09 だいさん「コンピューター対戦時、一時休止が欲しい」）：右上の ⏸・P か Esc・画面を離れたら自動で。ネットたいせんでは出さない =====
 let PAUSE=false;const bPause=document.getElementById('bPause');
 // ===== 試合のあとの スタンプ（2026-11-09 だいさん「試合が終わったら、土俵内にポップアップして押せるように」）=====
-const STAMPS=[{e:'🐶',t:'わん！'},{e:'🙇',t:'まいった'},{e:'🔥',t:'もう一番！'},{e:'👏',t:'つよい！'},{e:'🐾',t:'またね！'}];   // 5つめは コンピューターの返事だけ
+const STAMPS=[{e:'🐶',t:L('わん！','Woof!')},{e:'🙇',t:L('まいった','You got me')},{e:'🔥',t:L('もう一番！','One more!')},{e:'👏',t:L('つよい！','So strong!')},{e:'🐾',t:L('またね！','See you!')}];   // 5つめは コンピューターの返事だけ
 const STAMP_REPLY=[0,4,2,1];   // わん→わん・まいった→またね・もう一番→もう一番・つよい→まいった
 let STP=null,SB=[null,null];
 function stampRow(){const n=4,r=Math.max(24,Math.min(40,R0*0.15)),gap=Math.min(R0*0.46,(W-40)/n),x0=cx-gap*(n-1)/2,y=cy+R0*0.42;return STAMPS.slice(0,n).map((s,k)=>({x:x0+gap*k,y,r,k}));}
@@ -1139,24 +1299,24 @@ function drawStamps(t){const now=performance.now(),age=now-STP.t0;
   if(age>6000||(STP.sent>0&&now-STP.sent>2200)){stampDone();return;}
   ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';const row=stampRow(),k=Math.min(1,age/250);
   ctx.globalAlpha=k;ctx.fillStyle='rgba(20,14,10,.78)';const bw=Math.min(W-16,(row[3].x-row[0].x)+row[0].r*2+36),bh=row[0].r*2+58;ctx.beginPath();ctx.roundRect(cx-bw/2,row[0].y-row[0].r-36,bw,bh,16);ctx.fill();
-  ctx.fillStyle='#fff6e6';ctx.font=`bold ${Math.max(13,R0*0.055)}px sans-serif`;ctx.fillText(STP.sent>0?'おくりました！':'スタンプを おくる',cx,row[0].y-row[0].r-18);
+  ctx.fillStyle='#fff6e6';ctx.font=`bold ${Math.max(13,R0*0.055)}px sans-serif`;ctx.fillText(STP.sent>0?L('おくりました！','Sent!'):L('スタンプを おくる','Send a stamp'),cx,row[0].y-row[0].r-18);
   for(const b of row){const sel=STP.sent>0&&SB[myI()]&&SB[myI()].k===b.k,sc=(sel?1.15:1)*(0.8+0.2*k);ctx.globalAlpha=k*(STP.sent>0&&!sel?0.35:1);
     ctx.fillStyle=sel?'#ffd166':'#3a2f4a';ctx.beginPath();ctx.arc(b.x,b.y,b.r*sc,0,7);ctx.fill();ctx.font=`${Math.round(b.r*0.95)}px sans-serif`;ctx.fillText(STAMPS[b.k].e,b.x,b.y-2);
     ctx.font=`bold ${Math.max(11,b.r*0.36)}px sans-serif`;ctx.fillStyle='#fff6e6';ctx.fillText(STAMPS[b.k].t,b.x,b.y+b.r+12);}
-  ctx.globalAlpha=k*0.7;ctx.font=`${Math.max(11,R0*0.045)}px sans-serif`;ctx.fillText('ほかを タップで 結果へ',cx,row[0].y+row[0].r+30);ctx.restore();}
+  ctx.globalAlpha=k*0.7;ctx.font=`${Math.max(11,R0*0.045)}px sans-serif`;ctx.fillText(L('ほかを タップで 結果へ','Tap elsewhere for results'),cx,row[0].y+row[0].r+30);ctx.restore();}
 function drawStampBubbles(t){for(const i of[0,1]){const b=SB[i],p=P[i];if(!b||!p)continue;b.life-=1;if(b.life<=0){SB[i]=null;continue;}
   const k=Math.min(1,(150-b.life)/10),a=Math.min(1,b.life/30),s=STAMPS[b.k],x=p.x,y=p.y-p.r*2.1-Math.min(R0*0.05,(150-b.life)*0.4);
-  ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.textBaseline='middle';const fs=Math.max(15,R0*0.075),w=ctx.measureText?Math.max(fs*4.6,fs*(s.t.length+2.2)):fs*5;
+  ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.textBaseline='middle';const fs=Math.max(15,R0*0.075);ctx.font=`bold ${fs}px sans-serif`;const w=Math.max(fs*4.6,ctx.measureText(s.e+' '+s.t).width+fs*1.3);
   ctx.fillStyle='#fffaf0';ctx.strokeStyle=p.team;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(x-w/2*k,y-fs*0.95,w*k,fs*1.9,fs*0.8);ctx.fill();ctx.stroke();
   ctx.fillStyle='#3a2a1a';ctx.font=`bold ${fs}px sans-serif`;ctx.fillText(s.e+' '+s.t,x,y+1);ctx.restore();}}
 function setPause(v){if(PAUSE===v)return;PAUSE=v;bPause.textContent=v?'▶':'⏸';SND.hold(v);for(const p of P||[])p.held=-1;}
 bPause.onclick=e=>{e.stopPropagation();setPause(!PAUSE);};
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&!bPause.hidden&&state==='play')setPause(true);});
 function drawPause(){ctx.save();ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,14,10,.92)';const bw=Math.min(W-40,R0*1.5),bh=R0*0.55;ctx.beginPath();ctx.roundRect(cx-bw/2,cy-bh/2,bw,bh,18);ctx.fill();ctx.textAlign='center';ctx.fillStyle='#fff6e6';
-  ctx.font=`900 ${Math.max(30,R0*0.18)}px sans-serif`;ctx.fillText('⏸ ひとやすみ',cx,cy-bh*0.05);ctx.font=`${Math.max(15,R0*0.07)}px sans-serif`;ctx.globalAlpha=.85;ctx.fillText('タップで つづける',cx,cy+bh*0.3);ctx.restore();}
+  ctx.font=`900 ${Math.max(30,R0*0.18)}px sans-serif`;ctx.fillText(L('⏸ ひとやすみ','⏸ Paused'),cx,cy-bh*0.05);ctx.font=`${Math.max(15,R0*0.07)}px sans-serif`;ctx.globalAlpha=.85;ctx.fillText(L('タップで つづける','Tap to resume'),cx,cy+bh*0.3);ctx.restore();}
 const bVib=document.getElementById('bVib');bVib.textContent=SND.vib?'📳':'📴';bVib.onclick=e=>{e.stopPropagation();bVib.textContent=SND.toggleVib()?'📳':'📴';SND.buzz([80,60,120]);};
 const bSnd=document.getElementById('bSnd');bSnd.textContent=SND.on?'🔊':'🔇';bSnd.onclick=e=>{e.stopPropagation();bSnd.textContent=SND.toggle()?'🔊':'🔇';};
-newRound();state='menu';requestAnimationFrame(loop);
+newRound();state='menu';HS=0;requestAnimationFrame(loop);
 if(/[?&]watch/.test(location.search)){const q=new URLSearchParams(location.search);if(q.get('s'))stageSel=q.get('s');if(q.get('a'))pick[0]=q.get('a');if(q.get('b'))pick[1]=q.get('b');if(q.get('s'))stage=q.get('s');newMatch(false,true);}
 
 // ===== 動画にする（?rec）：rAF を止めて、外から1コマずつ進めて描く =====
@@ -1171,5 +1331,6 @@ window.simulate=function(n=100,a='anzu',b='oni',s='yuki',lv=null){SIMLV=lv;INTRO
   return Math.round(wins/n*100);
 };
 </script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 </body>
 </html>
