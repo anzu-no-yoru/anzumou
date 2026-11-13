@@ -519,7 +519,7 @@ function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i
     cd:0,sq:0,out:false,face:0,team:i?css('--p2')||'#4d9de0':css('--p1')||'#ff6b6b',
     held:-1,stam:1,r0:Math.max(24,R0*0.13)*c.r,big:0,curve:0,clCool:0,spUsed:false,fun:0,twice:0,kana:0,cpuWait:Math.random()*40,cpuHold:0,spWarn:0,pitaT:0,sks:skOf(i),skN:{stop:SK_N,rev:SK_N,dodge:SK_N,hataki:SK_N,tame:SK_N},skT:0,skE:'',stopT:0,tame:0,sp2:(!SIM&&WX.on&&WX.moon)?1:0,spMoon:0};}
 function newRound(){waves=[];CL=null;UT=null;utRound=-1;if(stageSel==='omakase'&&!SIM){const ks=Object.keys(STG).filter(k=>k!==stage);stage=ks[Math.floor(Math.random()*ks.length)];}else if(stageSel!=='omakase')stage=stageSel;if(FSTG)stage=FSTG;
-  P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={t:(WX.on?(WX.moon?'🌕':'')+WXS[WX.w].icon+' ':'')+STG[stage].icon+' '+STG[stage].name+L('　はっけよい…','  Hakkeyoi…'),life:60};freeze=SIM?1:60;parts=[];}
+  P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={k:'hk',life:60};banner.t=bnTxt(banner);freeze=SIM?1:60;parts=[];}
 function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
   PK=[...pick];if(MODE==='story'){PK[0]='anzu';PK[1]=EP.base;}else if(MODE==='daily'){PK[1]=dailyCfg().opp;}   // えらんだキャラ（pick）は そのまま残す
   INTRO0=(MODE!=='net'&&AGAIN)?60:150;INTRO=(SIM||w||pr)?0:INTRO0;AGAIN=false;pita=[0,0];ST=mkST();   // 夢の入口は れんしゅう・見る では出さない。もう一番は短く（2026-11-09 Fable のレビューで）
@@ -670,10 +670,10 @@ function onNet(m){if(!NET)return;
 // 親：様子をまとめる（場所は 土俵の大きさで割って送る＝画面の大きさが ちがっても同じに見える）
 function netSnap(){const n=v=>Math.round(v*1e4)/1e4;
   return{t:'snap',st:state,sc:score,stg:stage,rr:n(ringR/R0),in:INTRO,sh:shake,lu:lastUt,kora:KORA,
-    bn:banner&&{t:banner.t,life:banner.life,col:banner.col,w:banner.w,ut:banner.ut},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
+    bn:banner&&{t:banner.t,life:banner.life,col:banner.col,w:banner.w,ut:banner.ut,k:banner.k,i:banner.i},cl:CL&&{d:CL.d,a:CL.a,v:CL.v,t:CL.t,solo:CL.solo,ux:CL.ux,uy:CL.uy},
     p:P.map(p=>[n((p.x-cx)/R0),n((p.y-cy)/R0),n(p.vx/R0),n(p.vy/R0),n(p.ang),n(p.r/R0),n(p.sq),p.out?1:0,p.cd,p.fun,p.kana,p.big,p.face,p.held,p.spUsed?1:0,p.spLock,n(p.stam),p.hitT||0,p.pitaT||0,p.spWarn||0,p.skN?[p.skN.stop,p.skN.rev,p.skN.dodge,p.skN.hataki,p.skN.tame]:0,Math.round(p.skT||0),p.skE||'',p.tame>0?1:0]),pt:pita};}   // 23番め＝ため中（輪を子にも見せる）
 // 点が決まったときの言葉は、子が 自分から見た言葉・自分の言語で 作り直す（banner.w＝勝った方 → pointTxt）
-function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:m.bn.w!=null?pointTxt(m.bn.w,m.bn.ut):String(m.bn.t)};CL=m.cl;
+function netApply(m){if(!P)return;state=m.st;score=m.sc;stage=m.stg;ringR=m.rr*R0;INTRO=m.in;shake=m.sh;lastUt=m.lu;KORA=m.kora;banner=m.bn&&{...m.bn,t:bnTxt(m.bn)};CL=m.cl;
   m.p.forEach((a,i)=>{const p=P[i];if(!p)return;[p.x,p.y,p.vx,p.vy,p.ang,p.r,p.sq]=[cx+a[0]*R0,cy+a[1]*R0,a[2]*R0,a[3]*R0,a[4],a[5]*R0,a[6]];
     p.out=!!a[7];p.cd=a[8];p.fun=a[9];p.kana=a[10];p.big=a[11];p.face=a[12];p.held=a[13];p.spUsed=!!a[14];p.spLock=a[15];p.stam=a[16];p.hitT=a[17];p.pitaT=a[18]||0;p.spWarn=a[19]||0;if(a[20])p.skN={stop:a[20][0],rev:a[20][1],dodge:a[20][2],hataki:a[20][3]||0,tame:a[20][4]||0};p.skT=a[21]||0;p.skE=a[22]||'';p.tame=a[23]?1:0;});if(m.pt)pita=m.pt;}
 // 親の音は 子にも送る（勝ち負けの曲は それぞれが鳴らす）
@@ -698,7 +698,7 @@ function special(i){
   if(k==='tanuki'){SND.play('pon');p.fun=60;p.vx*=0.3;p.vy*=0.3;shake=Math.max(shake,5);}
   if(k==='issun'){SND.play('kozuchi');p.big=BIG_T;dash(p,1.0);}
   if(k==='oni'){SND.play('kana');dash(p,p.c.spMul||1.6);p.kana=45;p.cd=p.c.cd+10;shake=Math.max(shake,8);}
-  if(!SIM)banner={t:p.c.icon+' '+spName(p.c),life:50,col:p.team};
+  if(!SIM)banner={t:p.c.icon+' '+spName(p.c),k:'sp',i,life:50,col:p.team};
 }
 // ===== 土俵ぎわの連打合戦「こらえろ！」（2026-11-08 だいさん「飛ばされても踏ん張るシステム・連打とか」） =====
 // 押されて土俵ぎわまで来たら止まって連打合戦。v：-1＝こらえた／+1＝押し出された。押した側の連打は押し込み、押された側の連打はこらえ。
@@ -723,9 +723,9 @@ function clashStep(dt){CL.t+=dt;CL.v+=(CL.solo?0.011:0.002)*dt;
   clashPlace();const d=P[CL.d],a=P[CL.a];
   if(CL.v>=1||(CL.t>=CL_T&&CL.v>0.25)){ST.clL[d.i]++;d.vx=CL.ux*R0*0.025;d.vy=CL.uy*R0*0.025;d.hitT=45;d.face=20;CL=null;return;}   // 押し出された
   if(CL.v<=-1||CL.t>=CL_T){ST.clW[d.i]++;d.hitT=0;d.clCool=90;if(d.i===0&&counting()&&!CL.solo){REC.kor++;recSave();}shake=Math.max(shake,10);
-    if(CL.solo){d.vx=-CL.ux*R0*0.012;d.vy=-CL.uy*R0*0.012;CL=null;SND.play('koraeta');if(!SIM)banner={t:L('こらえた！','Held on!'),life:50,col:d.team};return;}
+    if(CL.solo){d.vx=-CL.ux*R0*0.012;d.vy=-CL.uy*R0*0.012;CL=null;SND.play('koraeta');if(!SIM)banner={t:L('こらえた！','Held on!'),k:'kr',life:50,col:d.team};return;}
     const mx=(d.x+a.x)/2,my=(d.y+a.y)/2,cw=Math.random()<.5?1:-1;UT={d:d.i,a:a.i,mx,my,a0:Math.atan2(d.y-my,d.x-mx),rad:Math.hypot(d.x-mx,d.y-my),t:0,ux:CL.ux,uy:CL.uy,cw};CL=null;
-    SND.play('utchari');if(!SIM)banner={t:L('うっちゃり！','Utchari!'),life:60,col:d.team};}}
+    SND.play('utchari');if(!SIM)banner={t:L('うっちゃり！','Utchari!'),k:'ut',life:60,col:d.team};}}
 function utStep(dt){UT.t+=dt;const d=P[UT.d],a=P[UT.a],k=Math.min(1,UT.t/18),an=UT.a0+Math.PI*k*UT.cw;
   d.x=UT.mx+Math.cos(an)*UT.rad;d.y=UT.my+Math.sin(an)*UT.rad;a.x=UT.mx-Math.cos(an)*UT.rad;a.y=UT.my-Math.sin(an)*UT.rad;d.sq=a.sq=0.5;
   if(k>=1){const th=(UT_A0+Math.random()*UT_A1)*(Math.random()<.5?1:-1),c=Math.cos(th),s=Math.sin(th),vx=UT.ux*c-UT.uy*s,vy=UT.ux*s+UT.uy*c,sp=R0*UT_V/Math.sqrt(a.c.mass)*(STG[stage].speed||1);   // 投げる向きは外から少しずれる（必ず出るとは限らない）
@@ -850,7 +850,7 @@ function cpuThink(i,dt){
 // ===== 毎フレーム =====
 function step(dt){
   if(INTRO>0){INTRO-=dt;return;}   // あんずが ねむって 夢に入るまで
-  if(freeze>0){freeze-=dt;if(freeze<=0&&state==='ready'){state='play';SND.play('nokotta');if(!SIM)banner={t:L('のこった！','Nokotta!'),life:40};}}
+  if(freeze>0){freeze-=dt;if(freeze<=0&&state==='ready'){state='play';SND.play('nokotta');if(!SIM)banner={t:L('のこった！','Nokotta!'),k:'nk',life:40};}}
   const fr=fricNow();
   if(state==='play'&&CL)clashStep(dt);
   else if(state==='play'&&UT)utStep(dt);
@@ -921,6 +921,9 @@ function step(dt){
   parts=parts.filter(q=>q.life>0);for(const w of waves)w.life-=dt;waves=waves.filter(w=>w.life>0);shake*=Math.pow(0.86,dt);if(banner){banner.life-=dt;if(banner.life<=0)banner=null;}
 }
 function chOf(i){return P&&P[i]?P[i].c:CH[PK[i]];}
+// バナーの言葉を 種類（k）から 自分の言語で作る。ネットの子は 親の言葉ではなく これを使う（日本語と英語の人が当たっても混ざらない）
+function bnTxt(b){if(b.w!=null)return pointTxt(b.w,b.ut);const c=b.k==='sp'&&chOf(b.i);
+  return b.k==='hk'?(WX.on?(WX.moon?'🌕':'')+WXS[WX.w].icon+' ':'')+STG[stage].icon+' '+STG[stage].name+L('　はっけよい…','  Hakkeyoi…'):b.k==='nk'?L('のこった！','Nokotta!'):b.k==='kr'?L('こらえた！','Held on!'):b.k==='ut'?L('うっちゃり！','Utchari!'):c?c.icon+' '+spName(c):String(b.t);}
 // 点が決まったときの言葉（自分から見た言葉・自分の言語で）。ネットの子は banner.w（勝った方）から 作り直す
 function pointTxt(w,ut){return ut?L('うっちゃりで逆転！','Utchari reversal!'):WATCH?chOf(w).name+L(' の勝ち！',' wins!'):w===myI()?L('あなたの勝ち！','You win!'):L('あいての勝ち！','Opponent wins!');}
 function dreamTxt(){return MODE==='story'&&EP?L(`…という、あんずの「${EP.t}」の夢でした 🐩💤`,`…and that was Anzu's dream of “${EP.t}” 🐩💤`):L('…という、あんずの夢でした 🐩💤',"…and that was Anzu's dream 🐩💤");}
@@ -1087,8 +1090,8 @@ function draw(t){
   if(P)for(const p of P){if(p.skT>0&&p.skE){const k=p.skT/34,y=p.y-p.r*1.9-(1-k)*16;ctx.save();ctx.globalAlpha=Math.min(1,k*2);ctx.font=`900 ${Math.max(14,R0*0.065)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#9ad1ff';ctx.strokeText(p.skE,p.x,y);ctx.fillText(p.skE,p.x,y);ctx.restore();}}
   if(STP)drawStamps(t);if(P)drawStampBubbles(t);
   if(MODE==='net'&&P&&(state==='ready'||INTRO>0)&&!(INTRO>0)){const me=P[myI()];ctx.save();ctx.font=`900 ${Math.max(18,R0*0.08)}px sans-serif`;ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#ffd166';ctx.strokeText(L('▼ あなた','▼ You'),me.x,me.y-me.r*1.9);ctx.fillText(L('▼ あなた','▼ You'),me.x,me.y-me.r*1.9);ctx.restore();}
-  if(TUT&&P&&(state==='play'||state==='ready')){const me=P[0],lines=TUT===1?L(['矢印が あいてを向いたら','「ちょん」と タップ！ 👆'],['When the arrow points at the opponent,','tap! 👆']):L(['こんどは 下の 丸ボタンで 必殺技！ 👇','（ぐっと長押し でも出る）'],['Now the round button below: Special! 👇','(or press and hold)']);
-    ctx.font=`bold ${Math.max(16,Math.min(21,W/20))}px sans-serif`;ctx.textAlign='center';const tw=Math.min(W-24,Math.max(...lines.map(l=>ctx.measureText(l).width))+36),lh=Math.max(22,Math.min(28,W/15)),bh=lh*2+18,by=Math.min(H-SAFEB-bh-12,cy+R0+34);
+  if(TUT&&P&&(state==='play'||state==='ready')){const me=P[0],lines=TUT===1?L(['矢印が あいてを向いたら','「ちょん」と タップ！ 👆'],['When the arrow faces','your opponent, tap! 👆']):L(['こんどは 下の 丸ボタンで 必殺技！ 👇','（ぐっと長押し でも出る）'],['Special: tap the round button 👇','(or press and hold)']);
+    let tfs=Math.max(16,Math.min(21,W/20));ctx.font=`bold ${tfs}px sans-serif`;const tmw=Math.max(...lines.map(l=>ctx.measureText(l).width));if(tmw>W-60){tfs=Math.max(11,tfs*(W-60)/tmw);ctx.font=`bold ${tfs}px sans-serif`;}ctx.textAlign='center';const tw=Math.min(W-24,Math.max(...lines.map(l=>ctx.measureText(l).width))+36),lh=Math.max(22,Math.min(28,W/15)),bh=lh*2+18,by=Math.min(H-SAFEB-bh-12,cy+R0+34);
     ctx.fillStyle='rgba(20,16,30,.85)';ctx.beginPath();if(ctx.roundRect)ctx.roundRect(cx-tw/2,by,tw,bh,14);else ctx.rect(cx-tw/2,by,tw,bh);ctx.fill();
     ctx.fillStyle='#ffd166';lines.forEach((l,k)=>ctx.fillText(l,cx,by+lh*(k+1)+2));
     if(TUT===1&&state==='play'){const tx=me.x+Math.cos(me.ang)*me.r*1.85,ty=me.y+Math.sin(me.ang)*me.r*1.85,good=angDiff(me.ang,Math.atan2(P[1].y-me.y,P[1].x-me.x))<0.35;
