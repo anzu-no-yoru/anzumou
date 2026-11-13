@@ -267,7 +267,7 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <div id="rpBox" hidden><canvas id="rpCv" aria-label="決まり手のリプレイ"></canvas></div>
     <img id="cardImg" class="card" alt="結果の画像">
     <p id="cardHint">画像を長押しすると保存できます（インスタに投稿するときに）</p>
-    <a id="aSave" class="ghost" download="anzumou.jpg" style="display:inline-block;text-decoration:none;font-size:15px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;color:var(--ink);margin:5px 3px">画像を保存</a><button class="ghost" id="bShare">結果を送る</button>
+    <a id="aSave" class="ghost" download="anzumou.jpg" style="display:inline-block;text-decoration:none;font-size:15px;padding:10px 16px;border:1px solid var(--line);border-radius:12px;color:var(--ink);margin:5px 3px">画像を保存</a><button class="ghost" id="bShare">結果を送る</button><button class="ghost" id="bVid" hidden>🎞 決まり手を動画に</button>
   </div>
 </div>
 <script>
@@ -945,7 +945,7 @@ function matchEnd(){state='over';if(SIM)return;if(NET&&NET.role==='host'&&MODE==
     $('titleLine').textContent=L('🏷 二つ名「'+titleFull(PK[0])+'」','🏷 Nickname: “'+titleFull(PK[0])+'”');diaryAdd();if(WEEK7)banner={t:L('🌙 七日の夢、おしまい','🌙 Seven Nights of Dreams, complete'),life:9999,col:'#ffd23f'};}
   try{const u=makeCard(w);document.getElementById('cardImg').src=u;document.getElementById('aSave').href=u;}catch(e){console.warn(e);}
   $('rpBox').hidden=WATCH||!!(NET&&NET.role==='guest'&&MODE==='net')||!lastRP||lastRP.length<20;   // 子は step を回さないので リプレイが無い
-  showTip(w);$('bShare').hidden=MODE==='net'||WATCH;$('bShare').textContent=L('結果を送る','Share result');
+  vidReset();showTip(w);$('bShare').hidden=MODE==='net'||WATCH;$('bShare').textContent=L('結果を送る','Share result');
   document.getElementById('dreamLine').textContent=dreamTxt();
   if(!WATCH&&MODE!=='net'&&SKSEL.every(k=>k==='none')){try{if(!localStorage.getItem('anzumou_skhint')){localStorage.setItem('anzumou_skhint','1');document.getElementById('recLine').innerHTML+='<br><span style="font-weight:400">'+L('💡 えらぶ画面で、必殺技ボタンの 左右に 技（ふんばる・逆向き・よける・はたき・ため）を 置けます','💡 On the Choose screen you can put moves (Brace, Reverse, Sidestep, Slap, Charge) left and right of the Special button')+'</span>';}}catch(e){}}   // 1回だけ教える
   if(WATCH){document.getElementById('over').hidden=false;return;}
@@ -994,7 +994,7 @@ function showDiary(){const D=DIARY.filter(e=>e.mode!=='week7'),el=$('diaryList')
 async function diaryCopy(){const b=$('bDiaryCopy'),r=await sendText(L('📔 あんずの夢日記\n',"📔 Anzu's Dream Diary\n")+DIARY.slice(0,30).map(diaryLine).join('\n')+'\n'+SHARE_URL);if(r==='share'||r==='abort')return;
   b.textContent=r?L('コピーしました','Copied'):L('コピーできませんでした','Could not copy');setTimeout(()=>{b.textContent=L('夢日記をコピー','Copy diary');},2000);}
 // 🎞 決まり手のリプレイ（2026-11-10 だいさん「全部やって」）：毎コマ 2人を R0 で割って 直近180コマ。点が決まったら その分と、そのあと45コマ
-function rpRec(dt){rpAcc+=dt;if(rpAcc<1)return;rpAcc%=1;const f={rr:ringR/R0,p:P.map(p=>[(p.x-cx)/R0,(p.y-cy)/R0,p.r/R0,p.ang,p.out?1:0,p.face||0,p.sq||0])};
+function rpRec(dt){if(!(R0>0))return;rpAcc+=dt;if(rpAcc<1)return;rpAcc%=1;const f={rr:ringR/R0,p:P.map(p=>[(p.x-cx)/R0,(p.y-cy)/R0,p.r/R0,p.ang,p.out?1:0,p.face||0,p.sq||0])};
   if(state==='play'){RPB.push(f);if(RPB.length>180)RPB.shift();}else if(lastRP&&RPT>0){RPT--;lastRP.push(f);}}
 function rpDraw(t){const box=$('rpBox');if(box.hidden||!lastRP||!RPM||!lastRP.length)return;
   onCanvas($('rpCv'),(g,w,h)=>{const th=TH[RPM.stg],S=h*0.42,ox=w/2,oy=h/2+4,n=lastRP.length,i=Math.floor(t/16.67)%(n+40),f=lastRP[Math.min(i,n-1)];
@@ -1003,12 +1003,54 @@ function rpDraw(t){const box=$('rpBox');if(box.hidden||!lastRP||!RPM||!lastRP.le
     for(const j of[0,1]){const a=f.p[j];drawPoyo({i:j,k:RPM.k[j],c:RPM.c[j],x:ox+a[0]*S,y:oy+a[1]*S,vx:0,vy:0,r:a[2]*S,r0:a[2]*S,ang:a[3],out:!!a[4],face:a[5],sq:a[6],held:-1,spUsed:true,spLock:0,fun:0,kana:0,big:0,cd:0,noArrow:true,team:RPM.team[j]},t);}
     g.font='bold 13px sans-serif';g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.fillStyle='#fff';g.textAlign='left';g.strokeText(L('🎞 決まり手','🎞 Winning move'),8,18);g.fillText(L('🎞 決まり手','🎞 Winning move'),8,18);
     if(i>=n){g.textAlign='right';g.strokeText(L('もう一度…','Again…'),w-8,18);g.fillText(L('もう一度…','Again…'),w-8,18);}});}
+// 🎞 決まり手を動画に（2026-11-14 だいさん「進めて」）：リプレイ → スロー → 結果の 縦 4:5（720×900）の動画を その場で録る（MediaRecorder・音なし）。
+// 録るのは 1回目のボタン、送る・保存は 2回目のボタン（録る間に「押した直後」の扱いが切れて share が通らないため）
+let VID=null;
+function vidMime(){if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return '';return ['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(m=>{try{return MediaRecorder.isTypeSupported(m);}catch(e){return false;}})||'';}
+function vidReset(){const b=$('bVid');VID=null;b.disabled=false;b.textContent=L('🎞 決まり手を動画に','🎞 Make a video');b.hidden=$('rpBox').hidden||!vidMime();}
+function vidInfo(){const w=lastW;return{rp:lastRP.slice(),M:RPM,w,sc:[score[0],score[1]],ut:lastUt===w,wc:chOf(w),c0:chOf(0),c1:chOf(1),stg:stage,dream:dreamTxt(),pita:pita[myI()]};}
+function vidFrame(g,k,I,NA,NS){const W=720,H=900,th=TH[I.M.stg],light=th&&th.light,ink=light?'#4a2e14':'#fff6e6',n=I.rp.length,S=245,ox=360,oy=520;
+  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,th?th.bg[0]:'#241b15');bg.addColorStop(1,th?th.bg[1]:'#4a3626');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  if(!light){g.fillStyle='rgba(255,255,255,.55)';for(let q=0;q<40;q++)g.fillRect((q*197)%W,(q*113)%200,q%5?2:3,q%5?2:3);}
+  let fi,slow=false,end=false;if(k<NA)fi=Math.min(n-1,k*2);else if(k<NA+NS){slow=true;fi=Math.min(n-1,Math.max(0,n-90)+(k-NA));}else{end=true;fi=n-1;}
+  const f=I.rp[fi];
+  g.textAlign='center';g.fillStyle=ink;g.font='900 60px sans-serif';g.fillText(L('あんずもう','ANZUMOU'),W/2,82);
+  g.font='bold 30px sans-serif';g.globalAlpha=.85;g.fillText(STG[I.M.stg].icon+' '+STG[I.M.stg].name+(/土俵$/.test(STG[I.M.stg].name)?'':L(' の土俵','')),W/2,128);g.globalAlpha=1;
+  g.fillStyle=th?th.ring:'#e9cf9b';g.beginPath();g.arc(ox,oy,S+12,0,7);g.fill();g.strokeStyle=th?th.line:'#b8904f';g.lineWidth=6;g.beginPath();g.arc(ox,oy,f.rr*S,0,7);g.stroke();
+  const keep=ctx;ctx=g;try{for(const j of[0,1]){const a=f.p[j];drawPoyo({i:j,k:I.M.k[j],c:I.M.c[j],x:ox+a[0]*S,y:oy+a[1]*S,vx:0,vy:0,r:a[2]*S,r0:a[2]*S,ang:a[3],out:!!a[4],face:a[5],sq:a[6],held:-1,spUsed:true,spLock:0,fun:0,kana:0,big:0,cd:0,noArrow:true,team:I.M.team[j]},fi*16.67);}}finally{ctx=keep;}
+  g.lineWidth=6;g.strokeStyle='rgba(0,0,0,.55)';g.fillStyle='#fff';g.font='900 34px sans-serif';
+  const tag=slow?L('🐢 スロー','🐢 Slow-mo'):L('🎞 決まり手','🎞 Winning move');if(!end){g.textAlign='left';g.strokeText(tag,24,236);g.fillText(tag,24,236);}
+  g.textAlign='center';g.font='bold 34px sans-serif';const vs=I.c0.icon+I.c0.name+'  vs  '+I.c1.icon+I.c1.name;let fs=34;while(fs>20&&g.measureText(vs).width>W-40){fs-=2;g.font='bold '+fs+'px sans-serif';}
+  g.fillStyle=ink;g.fillText(vs,W/2,176);
+  if(!end){g.font='bold 22px sans-serif';g.globalAlpha=.7;g.fillText(SHARE_URL.replace(/^https:\/\//,''),W/2,872);g.globalAlpha=1;}
+  if(end){const a=Math.min(1,(k-NA-NS)/10);g.globalAlpha=a*0.6;g.fillStyle='#000';g.fillRect(0,0,W,H);g.globalAlpha=a;
+    g.fillStyle='#fff';g.font='900 120px sans-serif';g.fillText(I.sc[0]+' − '+I.sc[1],W/2,400);
+    let t=I.wc.icon+' '+I.wc.name+(I.ut?L(' うっちゃりで勝ち！',' wins by Utchari!'):L(' の勝ち！',' wins!'));fs=50;g.font='900 50px sans-serif';while(fs>24&&g.measureText(t).width>W-40){fs-=2;g.font='900 '+fs+'px sans-serif';}g.fillStyle='#ffd23f';g.fillText(t,W/2,490);
+    if(I.pita>0){g.font='bold 34px sans-serif';g.fillStyle='#ffd23f';g.fillText(L('✨ ピタッ '+I.pita+'回','✨ Bullseye ×'+I.pita),W/2,550);}
+    t=I.dream;fs=30;g.font='italic 30px sans-serif';while(fs>16&&g.measureText(t).width>W-40){fs-=2;g.font='italic '+fs+'px sans-serif';}g.fillStyle='#fff6e6';g.fillText(t,W/2,630);
+    g.font='bold 24px sans-serif';g.globalAlpha=a*0.8;g.fillText(SHARE_URL.replace(/^https:\/\//,''),W/2,860);g.globalAlpha=1;}}
+function vidMake(){const mt=vidMime(),b=$('bVid');if(!mt||!lastRP||!RPM)return;const c=document.createElement('canvas');c.width=720;c.height=900;
+  if(!c.captureStream){b.textContent=L('この ブラウザでは 動画にできません','Video is not supported in this browser');return;}
+  c.style.cssText='position:fixed;left:-2000px;top:0;width:72px;height:90px;pointer-events:none';document.body.appendChild(c);
+  const g=c.getContext('2d'),I=vidInfo(),n=I.rp.length,NA=Math.ceil(n/2),NS=Math.min(90,n),NE=75,N=NA+NS+NE;
+  vidFrame(g,0,I,NA,NS);let rec,chunks=[];
+  try{rec=new MediaRecorder(c.captureStream(30),{mimeType:mt,videoBitsPerSecond:3e6});}catch(e){c.remove();b.textContent=L('動画にできませんでした','Could not make a video');return;}
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  rec.onstop=()=>{c.remove();const type=mt.split(';')[0],ext=type==='video/mp4'?'mp4':'webm',blob=new Blob(chunks,{type});
+    VID={file:new File([blob],'anzumou_'+jst().replace(/-/g,'')+'.'+ext,{type}),url:URL.createObjectURL(blob)};b.disabled=false;
+    b.textContent=L('📤 動画を送る・保存','📤 Share / save video');};
+  b.disabled=true;rec.start(250);const t0=performance.now();
+  (function tick(){const k=Math.floor((performance.now()-t0)/1000*30);if(k>=N){setTimeout(()=>rec.stop(),150);return;}vidFrame(g,k,I,NA,NS);
+    b.textContent=L('🎞 動画を作っています… ','🎞 Making video… ')+Math.max(1,Math.ceil((N-k)/30))+L('秒','s');setTimeout(tick,1000/60);})();}
+async function vidGo(){if(!VID){vidMake();return;}
+  try{if(navigator.canShare&&navigator.canShare({files:[VID.file]})){await navigator.share({files:[VID.file],text:shareText()});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  const a=document.createElement('a');a.href=VID.url;a.download=VID.file.name;document.body.appendChild(a);a.click();a.remove();}
 // 結果の画像（インスタの縦 4:5）
 function makeCard(w){const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d'),th=TH[stage],light=th&&th.light,ink=light?'#4a2e14':'#fff6e6';
   const bg=g.createLinearGradient(0,0,0,1350);bg.addColorStop(0,th?th.bg[0]:'#241b15');bg.addColorStop(1,th?th.bg[1]:'#4a3626');g.fillStyle=bg;g.fillRect(0,0,1080,1350);
   if(!light){g.fillStyle='rgba(255,255,255,.6)';for(let k=0;k<60;k++)g.fillRect((k*197)%1080,(k*113)%560,k%5?2:4,k%5?2:4);}
   g.textAlign='center';g.fillStyle=ink;g.font='900 104px sans-serif';g.fillText(L('あんずもう','ANZUMOU'),540,160);
-  g.font='bold 42px sans-serif';g.globalAlpha=.85;g.fillText(STG[stage].icon+' '+STG[stage].name+L(' の土俵',''),540,232);g.globalAlpha=.75;{const tx=MODE==='daily'?L('きょうの取組 ',"Today's Bout ")+ymd(new Date()).slice(5).replace('-','/')+L(' …という、あんずの夢でした'," …and that was Anzu's dream"):dreamTxt();
+  g.font='bold 42px sans-serif';g.globalAlpha=.85;g.fillText(STG[stage].icon+' '+STG[stage].name+(/土俵$/.test(STG[stage].name)?'':L(' の土俵','')),540,232);g.globalAlpha=.75;{const tx=MODE==='daily'?L('きょうの取組 ',"Today's Bout ")+ymd(new Date()).slice(5).replace('-','/')+L(' …という、あんずの夢でした'," …and that was Anzu's dream"):dreamTxt();
     let fs=36;g.font='italic 36px sans-serif';while(fs>20&&g.measureText(tx).width>1010){fs-=2;g.font='italic '+fs+'px sans-serif';}g.fillText(tx,540,300);}g.globalAlpha=1;   // 長い題は 字を小さく
   if(!WATCH){g.font='bold 44px sans-serif';g.lineWidth=7;g.strokeStyle='rgba(0,0,0,.55)';g.fillStyle='#ffd23f';const tx=L('✨ ピタッ '+pita[myI()]+'回','✨ Bullseye ×'+pita[myI()]);g.strokeText(tx,540,378);g.fillText(tx,540,378);}
   g.fillStyle=th?th.ring:'#e9cf9b';g.beginPath();g.ellipse(540,770,480,300,0,0,7);g.fill();g.strokeStyle=th?th.line:'#b8904f';g.lineWidth=12;g.beginPath();g.ellipse(540,770,425,262,0,0,7);g.stroke();
@@ -1276,7 +1318,7 @@ document.getElementById('bpr').onclick=()=>{$('moreP').hidden=true;MODE='free';E
 document.getElementById('bBack').onclick=()=>{setPause(false);STP=null;SB=[null,null];netClose();INTRO=0;MODE='free';EP=null;FSTG=null;MLV=null;state='menu';PRACTICE=false;WATCH=false;document.getElementById('bBack').hidden=true;document.getElementById('over').hidden=true;document.getElementById('title').hidden=false;homeInfo();};
 document.getElementById('bw').onclick=()=>{$('moreP').hidden=true;MODE='free';EP=null;FSTG=null;MLV=null;newMatch(false,true);};
 document.getElementById('bRe').onclick=()=>{if(MODE==='net'&&NET){if(NET.role==='host')netStart();else{netSend({t:'re'});document.getElementById('scoreTxt').textContent=L('あいてを 待っています…','Waiting for the opponent…');}return;}AGAIN=true;newMatch(cpu,WATCH);};
-$('bShare').onclick=shareGo;
+$('bShare').onclick=shareGo;$('bVid').onclick=vidGo;
 document.getElementById('bNet').onclick=()=>{document.getElementById('title').hidden=true;document.getElementById('netP').hidden=false;netMsg(NET&&NET.conn&&NET.conn.open?L('つながっています','Connected'):'');};
 document.getElementById('bNetClose').onclick=()=>{netClose();$('bInvite').hidden=true;document.getElementById('netP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bHost').onclick=()=>netHost();document.getElementById('bJoin').onclick=()=>netJoin();$('bInvite').onclick=netInvite;
