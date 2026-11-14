@@ -1286,23 +1286,25 @@ function renderPick(){mkPick(document.getElementById('pick0'),CH,()=>pick[0],k=>
 renderPick();showDesc('anzu');
 for(let k=0;k<70;k++)flakes.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:1+Math.random()*2.5,s:0.5+Math.random()*1.2,p:Math.random()*9});
 
-document.getElementById('b1p').onclick=()=>{netClose();MODE='free';EP=null;FSTG=null;MLV=null;newMatch(true);};
+document.getElementById('b1p').onclick=()=>{gcEv('taisen');netClose();MODE='free';EP=null;FSTG=null;MLV=null;newMatch(true);};
 function showStory(){const el=document.getElementById('storyList');el.innerHTML='';
   for(const e of STORY){const o=stOpen(e),b=document.createElement('button');b.className='ghost';b.style.cssText='display:flex;align-items:center;gap:10px;text-align:left;margin:0;width:100%';
     const md=e.d.slice(5).replace('-','/').replace(/^0/,'');
     b.innerHTML=`<span style="font-size:26px">${o?e.icon:'🔒'}</span><span style="flex:1"><b>${e.t}</b><br><small>${o?L('あいて ','vs ')+e.name+L('・',' · ')+STG[e.stg].icon+STG[e.stg].name+L('・',' · ')+LVS[e.lv].name:L(md+' のリールで ひらく','Opens on '+md)}</small></span><span style="font-size:12px;text-align:center">${CLEAR[e.k]?L('✅<br>なかま','✅<br>Friend'):''}</span>`;
     b.disabled=!o;if(!o)b.style.opacity='.5';
-    b.onclick=()=>{MODE='story';EP=e;FSTG=e.stg;MLV=e.lv;document.getElementById('storyP').hidden=true;newMatch(true);};el.appendChild(b);}}
+    b.onclick=()=>{gcEv('story-'+e.k);MODE='story';EP=e;FSTG=e.stg;MLV=e.lv;document.getElementById('storyP').hidden=true;newMatch(true);};el.appendChild(b);}}
 document.getElementById('bStory').onclick=()=>{showStory();showSrc();document.getElementById('title').hidden=true;document.getElementById('storyP').hidden=false;};
 document.getElementById('bStoryClose').onclick=()=>{document.getElementById('storyP').hidden=true;document.getElementById('title').hidden=false;};
-document.getElementById('bDaily').onclick=()=>{const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
+document.getElementById('bDaily').onclick=()=>{gcEv('daily');const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
 // 🎌 あんず場所（2026-11-14）：インスタの取組リール（毎晩21:30・Game/reel/basho.js の取組表）と同じ1番を、自分で取る入口。
 //   days＝[あか, あお, 土俵]（リールを出すと決めた日だけ書く。足したら 公開用/build.py で書き出して push）。日付は日本時間。テスト用 ?basho=日目
 const BASHO={start:'2026-11-15',days:[['oni','issun','tsuchi'],['anzu','usagi','yuki'],['tanuki','oni','sabaku']]};
 const BASHO_D=['初日','二日目','三日目','四日目','五日目','六日目','七日目','中日','九日目','十日目','十一日目','十二日目','十三日目','十四日目','千秋楽'];
+// 来た人・押した数を数える（GoatCounter・個人は追わない）。公開用の書き出しが 数える行を入れたときだけ動く。手元の版では 何もしない
+function gcEv(n){try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:n,title:n,event:true});}catch(e){}}
 let FPK=null;   // 取組のキャラを決め打ち（[自分, あいて]）。FSTG が無い・たいせん以外になったら newMatch が消す
 function bashoDay(){const q=new URLSearchParams(location.search).get('basho'),n=q?+q-1:Math.round((Date.parse(jst())-Date.parse(BASHO.start))/864e5);return BASHO.days[n]?n:-1;}
-function bashoGo(i){const n=bashoDay();if(n<0)return;const d=BASHO.days[n];netClose();MODE='free';EP=null;MLV=null;FSTG=d[2];FPK=i?[d[1],d[0]]:[d[0],d[1]];newMatch(true);}
+function bashoGo(i){const n=bashoDay();if(n<0)return;const d=BASHO.days[n];gcEv('basho-'+(n+1)+'-'+d[i?1:0]);netClose();MODE='free';EP=null;MLV=null;FSTG=d[2];FPK=i?[d[1],d[0]]:[d[0],d[1]];newMatch(true);}
 document.getElementById('bBa').onclick=()=>bashoGo(0);document.getElementById('bBb').onclick=()=>bashoGo(1);
 function bashoInfo(){const n=bashoDay(),box=document.getElementById('bashoBox');box.hidden=n<0;if(n<0)return;const d=BASHO.days[n];
   document.getElementById('bashoT').innerHTML=L('🎌 あんず場所 '+BASHO_D[n]+'（'+STG[d[2]].icon+STG[d[2]].name+'）','🎌 Anzu Basho Day '+(n+1)+' ('+STG[d[2]].icon+STG[d[2]].name+')')+'<br><span style="font-weight:400;font-size:12px">'+L('今夜の取組を じぶんで取る。どっちで？',"Play tonight's bout yourself. Pick a side")+'</span>';
@@ -1394,6 +1396,7 @@ window.simulate=function(n=100,a='anzu',b='oni',s='yuki',lv=null){SIMLV=lv;INTRO
   return Math.round(wins/n*100);
 };
 </script>
+<script data-goatcounter="https://anzumou.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 </body>
 </html>
