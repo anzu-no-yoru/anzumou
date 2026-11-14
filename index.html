@@ -48,6 +48,7 @@ kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;paddi
 .vstxt{font-size:13px;color:var(--sub);margin:2px 0 4px}
 button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
 .row2{display:flex;gap:6px;justify-content:center}
+.row2[hidden]{display:none}
 .row2 button{flex:1 1 0;margin:4px 0;padding:10px 6px;font-size:14px}
 .ch canvas{display:block;width:100%;height:50px;margin:0 auto}
 .ch span{display:block;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
@@ -90,7 +91,10 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <p id="wxLine" class="tag" style="margin:0 0 4px"></p>
     <div id="bashoBox" hidden style="border:1px solid var(--line);border-radius:14px;padding:6px 6px 4px;margin:4px 0;background:rgba(255,209,102,.16)">
       <div id="bashoT" style="font-weight:700;font-size:14px;line-height:1.4"></div>
-      <div class="row2"><button id="bBa" class="go" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button><button id="bBb" class="go b2" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button></div>
+      <div id="bashoY" hidden><div id="bashoYT" style="font-size:12px;line-height:1.4;margin-top:4px"></div>
+        <div class="row2"><button id="bYa" class="ghost" style="margin:3px 3px 2px;font-size:13px;padding:6px 4px;flex:1"></button><button id="bYb" class="ghost" style="margin:3px 3px 2px;font-size:13px;padding:6px 4px;flex:1"></button></div></div>
+      <div id="bashoPT" style="font-size:12px;line-height:1.4;margin-top:4px"></div>
+      <div class="row2" id="bashoP"><button id="bBa" class="go" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button><button id="bBb" class="go b2" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button></div>
     </div>
     <button id="b1p" class="go big">たいせん</button>
     <div class="row2"><button id="bDaily" class="go b2">📅 きょうの取組</button><button id="bStory" class="go b2">📜 ものがたり</button></div>
@@ -1298,17 +1302,41 @@ document.getElementById('bStoryClose').onclick=()=>{document.getElementById('sto
 document.getElementById('bDaily').onclick=()=>{gcEv('daily');const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
 // 🎌 あんず場所（2026-11-14）：インスタの取組リール（毎晩21:30・Game/reel/basho.js の取組表）と同じ1番を、自分で取る入口。
 //   days＝[あか, あお, 土俵]（リールを出すと決めた日だけ書く。足したら 公開用/build.py で書き出して push）。日付は日本時間。テスト用 ?basho=日目
-const BASHO={start:'2026-11-15',days:[['oni','issun','tsuchi'],['anzu','usagi','yuki'],['tanuki','oni','sabaku']]};
+const BASHO={start:'2026-11-15',days:[['oni','issun','tsuchi'],['anzu','usagi','yuki'],['tanuki','oni','sabaku']],k:'hqa'};
 const BASHO_D=['初日','二日目','三日目','四日目','五日目','六日目','七日目','中日','九日目','十日目','十一日目','十二日目','十三日目','十四日目','千秋楽'];
 // 来た人・押した数を数える（GoatCounter・個人は追わない）。公開用の書き出しが 数える行を入れたときだけ動く。手元の版では 何もしない
 function gcEv(n){try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:n,title:n,event:true});}catch(e){}}
 let FPK=null;   // 取組のキャラを決め打ち（[自分, あいて]）。FSTG が無い・たいせん以外になったら newMatch が消す
-function bashoDay(){const q=new URLSearchParams(location.search).get('basho'),n=q?+q-1:Math.round((Date.parse(jst())-Date.parse(BASHO.start))/864e5);return BASHO.days[n]?n:-1;}
+// 日本時間の「何日目か」（0＝初日）と 21:30（リールが出る時刻）を過ぎたか。テスト用 ?basho=日目・?late=1|0
+function bashoClock(){const q=new URLSearchParams(location.search),b=q.get('basho'),lt=q.get('late'),t=new Date(Date.now()+9*3600e3);
+  return {n:b?+b-1:Math.round((Date.parse(jst())-Date.parse(BASHO.start))/864e5),late:lt!=null?lt==='1':t.getUTCHours()*60+t.getUTCMinutes()>=21*60+30};}
+function bashoDay(){const n=bashoClock().n;return BASHO.days[n]?n:-1;}
+// 🔮 取組の予想（2026-11-14）：リールの「コメントで予想してね」と同じ問いを ゲームでも。21:30 までは その日、過ぎたら あしたの取組を予想。
+//   答え＝BASHO.k（そのまま書かない：勝ったのは days[n][(parseInt(k[n],36)+n)%2]）。21:30 を過ぎた日だけ 見せる。記録 localStorage anzumou_yoso {日目:キャラ}
+let YOSO={};try{YOSO=JSON.parse(localStorage.getItem('anzumou_yoso')||'{}')||{};}catch(e){}
+function bashoWin(n){const c=(BASHO.k||'')[n];return c==null||!BASHO.days[n]?null:BASHO.days[n][(parseInt(c,36)+n)%2];}
+function yosoDay(){const c=bashoClock(),t=c.late?c.n+1:c.n;return BASHO.days[t]?t:-1;}
+function yosoRev(){const c=bashoClock();let r=Math.min(c.late?c.n:c.n-1,BASHO.days.length-1);return r>=0&&bashoWin(r)?r:-1;}
+function yosoScore(){let h=0,t=0;for(let d=0;d<=yosoRev();d++){const p=YOSO[d+1],w=bashoWin(d);if(p&&w){t++;if(p===w)h++;}}return {h,t};}
+function yosoGo(i){const t=yosoDay();if(t<0)return;const k=BASHO.days[t][i];YOSO[t+1]=k;try{localStorage.setItem('anzumou_yoso',JSON.stringify(YOSO));}catch(e){}gcEv('yoso-'+(t+1)+'-'+k);bashoInfo();}
+document.getElementById('bYa').onclick=()=>yosoGo(0);document.getElementById('bYb').onclick=()=>yosoGo(1);
 function bashoGo(i){const n=bashoDay();if(n<0)return;const d=BASHO.days[n];gcEv('basho-'+(n+1)+'-'+d[i?1:0]);netClose();MODE='free';EP=null;MLV=null;FSTG=d[2];FPK=i?[d[1],d[0]]:[d[0],d[1]];newMatch(true);}
 document.getElementById('bBa').onclick=()=>bashoGo(0);document.getElementById('bBb').onclick=()=>bashoGo(1);
-function bashoInfo(){const n=bashoDay(),box=document.getElementById('bashoBox');box.hidden=n<0;if(n<0)return;const d=BASHO.days[n];
-  document.getElementById('bashoT').innerHTML=L('🎌 あんず場所 '+BASHO_D[n]+'（'+STG[d[2]].icon+STG[d[2]].name+'）','🎌 Anzu Basho Day '+(n+1)+' ('+STG[d[2]].icon+STG[d[2]].name+')')+'<br><span style="font-weight:400;font-size:12px">'+L('今夜の取組を じぶんで取る。どっちで？',"Play tonight's bout yourself. Pick a side")+'</span>';
-  document.getElementById('bBa').textContent=CH[d[0]].icon+' '+CH[d[0]].name+L(' で',' ');document.getElementById('bBb').textContent=CH[d[1]].icon+' '+CH[d[1]].name+L(' で','');}
+function bashoInfo(){const n=bashoDay(),t=yosoDay(),r=yosoRev(),box=document.getElementById('bashoBox');box.hidden=n<0&&t<0&&r<0;if(box.hidden)return;
+  const sg=x=>STG[x].icon+STG[x].name,nm=k=>CH[k].icon+CH[k].name,dn=x=>L(BASHO_D[x],'Day '+(x+1));
+  let h=L('🎌 あんず場所','🎌 Anzu Basho')+(n>=0?' '+dn(n)+L('（'+sg(BASHO.days[n][2])+'）',' ('+sg(BASHO.days[n][2])+')'):L('（毎晩21:30）',' (nightly 9:30pm JST)'));
+  if(r>=0){const w=bashoWin(r),p=YOSO[r+1],s=yosoScore();   // いちばん新しい答え＋予想の当たり
+    h+='<br><span style="font-weight:400;font-size:12px">'+L('📣 '+BASHO_D[r]+'の答え：'+nm(w)+' の勝ち','📣 Day '+(r+1)+': '+nm(w)+' won')+(p?(p===w?L('　✅ 当たり！','  ✅ You got it!'):L('　❌ はずれ','  ❌ Missed')):'')
+      +(s.t?L('（予想 '+s.h+'/'+s.t+' 当たり）',' (predictions '+s.h+'/'+s.t+')'):'')+'</span>';}
+  document.getElementById('bashoT').innerHTML=h;
+  const yb=document.getElementById('bashoY');yb.hidden=t<0;
+  if(t>=0){const d=BASHO.days[t],p=YOSO[t+1],today=t===bashoClock().n;
+    document.getElementById('bashoYT').textContent=(today?L('🔮 今夜の取組、どっちが勝つ？','🔮 Who wins tonight?'):L('🔮 あした（'+BASHO_D[t]+'・'+sg(d[2])+'）、どっちが勝つ？','🔮 Who wins tomorrow (Day '+(t+1)+', '+sg(d[2])+')?'))
+      +(p?L('　→ '+CH[p].name+' と予想。答えは '+(today?'今夜':'あした')+' 21:30 のリールで','  → you picked '+CH[p].name+'. Answer in the 9:30pm reel'):'');
+    ['bYa','bYb'].forEach((id,i)=>{const b=document.getElementById(id);b.textContent=(p===d[i]?'✔ ':'')+nm(d[i]);b.style.outline=p===d[i]?'2px solid #e0a020':'';});}
+  document.getElementById('bashoP').hidden=document.getElementById('bashoPT').hidden=n<0;
+  if(n>=0){const d=BASHO.days[n];document.getElementById('bashoPT').textContent=L('🥋 今夜の取組を じぶんで取る。どっちで？',"🥋 Play tonight's bout yourself. Pick a side");
+    document.getElementById('bBa').textContent=CH[d[0]].icon+' '+CH[d[0]].name+L(' で',' ');document.getElementById('bBb').textContent=CH[d[1]].icon+' '+CH[d[1]].name+L(' で','');}}
 function homeInfo(){bashoInfo();const d=dailyCfg(),td=ymd(new Date()),bd=document.getElementById('bDaily');
   document.getElementById('banLine').textContent='🎌 '+banTxt(REC.pt||0)+L('　🏷「'+titleFull(pick[0])+'」','　🏷 “'+titleFull(pick[0])+'”');
   document.getElementById('wxLine').textContent=L('今夜の夢の天気：',"Tonight's dream weather: ")+wxName(wxToday())+L('（たいせん・きょうの取組に効く）'," (affects Battle and Today's Bout)");
