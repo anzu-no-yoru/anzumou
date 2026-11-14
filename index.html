@@ -8,6 +8,9 @@
 <meta property="og:title" content="あんずもう ── あんずの夢の土俵">
 <meta property="og:description" content="ねむる犬あんずが見る、むかしばなしの夢の相撲。インスタ @anzu_no_yoru のリールと同じ昔話で遊べます。">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://anzu-no-yoru.github.io/anzumou/card.png">
+<meta property="og:url" content="https://anzu-no-yoru.github.io/anzumou/">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="noindex,nofollow">
 
 <style>
@@ -85,6 +88,10 @@ button.go.big{font-size:22px;padding:14px 18px;width:100%;margin:8px 0 4px}
     <div class="vstxt" id="vsTxt"></div>
     <p id="banLine" style="margin:2px 0 2px;font-weight:700"></p>
     <p id="wxLine" class="tag" style="margin:0 0 4px"></p>
+    <div id="bashoBox" hidden style="border:1px solid var(--line);border-radius:14px;padding:6px 6px 4px;margin:4px 0;background:rgba(255,209,102,.16)">
+      <div id="bashoT" style="font-weight:700;font-size:14px;line-height:1.4"></div>
+      <div class="row2"><button id="bBa" class="go" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button><button id="bBb" class="go b2" style="margin:4px 3px 2px;font-size:15px;padding:8px 6px;flex:1"></button></div>
+    </div>
     <button id="b1p" class="go big">たいせん</button>
     <div class="row2"><button id="bDaily" class="go b2">📅 きょうの取組</button><button id="bStory" class="go b2">📜 ものがたり</button></div>
     <button id="bNet" class="go b2" style="width:100%;margin:4px 0">🌐 ネットたいせん（リンクを送って友だちと）</button>
@@ -521,7 +528,7 @@ function mkPlayer(i){const c=(MODE==='net'&&NETC)?NETC[i]:(MODE==='story'&&EP&&i
 function newRound(){waves=[];CL=null;UT=null;utRound=-1;if(stageSel==='omakase'&&!SIM){const ks=Object.keys(STG).filter(k=>k!==stage);stage=ks[Math.floor(Math.random()*ks.length)];}else if(stageSel!=='omakase')stage=stageSel;if(FSTG)stage=FSTG;
   P=[mkPlayer(0),mkPlayer(1)];ringR=R0;roundT=0;state='ready';SND.play('hakke');RPB=[];rpAcc=0;WIND_A=Math.random()*Math.PI*2;banner={k:'hk',life:60};banner.t=bnTxt(banner);freeze=SIM?1:60;parts=[];}
 function newMatch(c,w=false,pr=false){if(MODE==='free'&&oppSel==='random'&&!/[?&]watch/.test(location.search)){const ks=BASE5;pick[1]=ks[Math.floor(Math.random()*ks.length)];}
-  PK=[...pick];if(MODE==='story'){PK[0]='anzu';PK[1]=EP.base;}else if(MODE==='daily'){PK[1]=dailyCfg().opp;}   // えらんだキャラ（pick）は そのまま残す
+  PK=[...pick];if(!FSTG||MODE!=='free')FPK=null;if(FPK)PK=[...FPK];if(MODE==='story'){PK[0]='anzu';PK[1]=EP.base;}else if(MODE==='daily'){PK[1]=dailyCfg().opp;}   // えらんだキャラ（pick）は そのまま残す
   INTRO0=(MODE!=='net'&&AGAIN)?60:150;INTRO=(SIM||w||pr)?0:INTRO0;AGAIN=false;pita=[0,0];ST=mkST();   // 夢の入口は れんしゅう・見る では出さない。もう一番は短く（2026-11-09 Fable のレビューで）
   cpu=c;WATCH=w;PRACTICE=pr;
   WX=((MODE==='free'||MODE==='daily')&&c&&!w&&!pr&&!SIM)?{...wxToday(),on:true}:{w:'hare',moon:false,on:false};DEEP=(MODE!=='net'&&c&&!w&&!pr)?(REC.st>=3?2:(REC.lst||0)>=1?1:0):0;WEEK7=false;lastRP=null;RPM=null;utMe=0;   // 夢の天気・夢の深さ（2026-11-10）
@@ -1289,7 +1296,18 @@ function showStory(){const el=document.getElementById('storyList');el.innerHTML=
 document.getElementById('bStory').onclick=()=>{showStory();showSrc();document.getElementById('title').hidden=true;document.getElementById('storyP').hidden=false;};
 document.getElementById('bStoryClose').onclick=()=>{document.getElementById('storyP').hidden=true;document.getElementById('title').hidden=false;};
 document.getElementById('bDaily').onclick=()=>{const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
-function homeInfo(){const d=dailyCfg(),td=ymd(new Date()),bd=document.getElementById('bDaily');
+// 🎌 あんず場所（2026-11-14）：インスタの取組リール（毎晩21:30・Game/reel/basho.js の取組表）と同じ1番を、自分で取る入口。
+//   days＝[あか, あお, 土俵]（リールを出すと決めた日だけ書く。足したら 公開用/build.py で書き出して push）。日付は日本時間。テスト用 ?basho=日目
+const BASHO={start:'2026-11-15',days:[['oni','issun','tsuchi'],['anzu','usagi','yuki'],['tanuki','oni','sabaku']]};
+const BASHO_D=['初日','二日目','三日目','四日目','五日目','六日目','七日目','中日','九日目','十日目','十一日目','十二日目','十三日目','十四日目','千秋楽'];
+let FPK=null;   // 取組のキャラを決め打ち（[自分, あいて]）。FSTG が無い・たいせん以外になったら newMatch が消す
+function bashoDay(){const q=new URLSearchParams(location.search).get('basho'),n=q?+q-1:Math.round((Date.parse(jst())-Date.parse(BASHO.start))/864e5);return BASHO.days[n]?n:-1;}
+function bashoGo(i){const n=bashoDay();if(n<0)return;const d=BASHO.days[n];netClose();MODE='free';EP=null;MLV=null;FSTG=d[2];FPK=i?[d[1],d[0]]:[d[0],d[1]];newMatch(true);}
+document.getElementById('bBa').onclick=()=>bashoGo(0);document.getElementById('bBb').onclick=()=>bashoGo(1);
+function bashoInfo(){const n=bashoDay(),box=document.getElementById('bashoBox');box.hidden=n<0;if(n<0)return;const d=BASHO.days[n];
+  document.getElementById('bashoT').innerHTML=L('🎌 あんず場所 '+BASHO_D[n]+'（'+STG[d[2]].icon+STG[d[2]].name+'）','🎌 Anzu Basho Day '+(n+1)+' ('+STG[d[2]].icon+STG[d[2]].name+')')+'<br><span style="font-weight:400;font-size:12px">'+L('今夜の取組を じぶんで取る。どっちで？',"Play tonight's bout yourself. Pick a side")+'</span>';
+  document.getElementById('bBa').textContent=CH[d[0]].icon+' '+CH[d[0]].name+L(' で',' ');document.getElementById('bBb').textContent=CH[d[1]].icon+' '+CH[d[1]].name+L(' で','');}
+function homeInfo(){bashoInfo();const d=dailyCfg(),td=ymd(new Date()),bd=document.getElementById('bDaily');
   document.getElementById('banLine').textContent='🎌 '+banTxt(REC.pt||0)+L('　🏷「'+titleFull(pick[0])+'」','　🏷 “'+titleFull(pick[0])+'”');
   document.getElementById('wxLine').textContent=L('今夜の夢の天気：',"Tonight's dream weather: ")+wxName(wxToday())+L('（たいせん・きょうの取組に効く）'," (affects Battle and Today's Bout)");
   bd.innerHTML=L('📅 きょうの取組',"📅 Today's Bout")+(DAILY.d===td?(DAILY.r==='勝ち'?' ✅':' ✖'):'')+`<span class="wk">${weekMarks()}</span>`;   // 週の取組（●＝きょう まだ）
