@@ -1302,7 +1302,7 @@ document.getElementById('bStoryClose').onclick=()=>{document.getElementById('sto
 document.getElementById('bDaily').onclick=()=>{gcEv('daily');const d=dailyCfg();MODE='daily';EP=null;FSTG=d.stg;MLV=d.lv;newMatch(true);};
 // 🎌 あんず場所（2026-11-14）：インスタの取組リール（毎晩21:30・Game/reel/basho.js の取組表）と同じ1番を、自分で取る入口。
 //   days＝[あか, あお, 土俵]（リールを出すと決めた日だけ書く。足したら 公開用/build.py で書き出して push）。日付は日本時間。テスト用 ?basho=日目
-const BASHO={start:'2026-11-15',days:[['oni','issun','tsuchi'],['anzu','usagi','yuki'],['tanuki','oni','sabaku']],k:'hqa'};
+const BASHO={start:'2026-11-15',days:[['usagi','tanuki','umi'],['anzu','oni','sabaku'],['oni','issun','tsuchi']],k:'gra'};
 const BASHO_D=['初日','二日目','三日目','四日目','五日目','六日目','七日目','中日','九日目','十日目','十一日目','十二日目','十三日目','十四日目','千秋楽'];
 // 来た人・押した数を数える（GoatCounter・個人は追わない）。公開用の書き出しが 数える行を入れたときだけ動く。手元の版では 何もしない
 function gcEv(n){try{if(window.goatcounter&&window.goatcounter.count)window.goatcounter.count({path:n,title:n,event:true});}catch(e){}}
